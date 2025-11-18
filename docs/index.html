@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Moderator - AI-Powered WordPress Content Moderation</title>
+    <meta name="description" content="AI-powered automatic moderation for WordPress posts and comments using OpenAI or Anthropic Claude. Stops spam and harmful content before it's published.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            margin-top: 40px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            font-size: 1.8em;
+        }
+        h2:first-child {
+            margin-top: 0;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-size: 1.3em;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .features {
+            list-style: none;
+            padding-left: 0;
+            margin: 20px 0;
+        }
+        .features li {
+            padding: 12px 0;
+            padding-left: 35px;
+            position: relative;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .features li:last-child {
+            border-bottom: none;
+        }
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.3em;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        .setup-box {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .setup-box h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .warning-box {
+            background: #fff9e6;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .pricing-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .pricing-card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        .pricing-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .faq-item {
+            margin-bottom: 25px;
+        }
+        .faq-question {
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        footer {
+            background: #f5f5f5;
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .nav {
+            background: #f9f9f9;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 0;
+            margin: 0;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav a:hover {
+            color: #764ba2;
+        }
+        @media (max-width: 768px) {
+            .pricing-table {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart Moderator</h1>
+            <p class="tagline">AI-Powered Content Moderation for WordPress</p>
+            <p style="margin-top: 15px;">Stop spam and harmful content before it's published</p>
+        </header>
+
+        <nav class="nav">
+            <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#setup">Setup</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#support">Support</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <section id="about">
+                <h2>About</h2>
+                <p>Smart Moderator automatically reviews new posts and comments using AI (OpenAI GPT or Anthropic Claude) to prevent spam, abuse, and harmful content before publication.</p>
+
+                <div class="info-box">
+                    <strong>AI-powered protection for your WordPress site</strong> - Content is reviewed by your configured AI model via secure API to keep your site safe and spam-free.
+                </div>
+            </section>
+
+            <section id="features">
+                <h2>Key Features</h2>
+                <ul class="features">
+                    <li><strong>AI-driven moderation</strong> – Content is reviewed by your configured AI model via secure API</li>
+                    <li><strong>Custom prompts</strong> – Define global moderation rules and add context for posts or comments separately</li>
+                    <li><strong>Immediate moderation</strong> – Content is approved or rejected as soon as it's saved</li>
+                    <li><strong>Enforce moderation result</strong> – Re-checks and re-applies AI decision after 60 seconds to prevent overrides from other plugins</li>
+                    <li><strong>Full logs</strong> – All moderation decisions are stored per post/comment for transparency</li>
+                    <li><strong>Secure storage</strong> – API keys kept in database, never logged, transmitted only via HTTPS</li>
+                    <li><strong>Compatible</strong> – Works with WordPress comment moderation settings and other plugins</li>
+                </ul>
+            </section>
+
+            <section id="how-it-works">
+                <h2>How It Works</h2>
+                <ol>
+                    <li>User submits a post or comment</li>
+                    <li>Smart Moderator sends it to your AI endpoint (OpenAI, Anthropic, or custom)</li>
+                    <li>AI returns "approve" or "reject" with optional reason</li>
+                    <li>Plugin updates post/comment status:
+                        <ul>
+                            <li>Approved → published (if permissions allow)</li>
+                            <li>Rejected → held as pending/unapproved</li>
+                        </ul>
+                    </li>
+                    <li>If <strong>"Enforce moderation result"</strong> is enabled, plugin re-checks after <strong>60 seconds</strong> to ensure no other plugin or user overrode the decision</li>
+                </ol>
+            </section>
+
+            <section id="privacy">
+                <h2>Privacy & Data Handling</h2>
+                <ul>
+                    <li>API key stored locally in WordPress database</li>
+                    <li>Logs include only decision outcomes, reasons, and timestamps - not full content</li>
+                    <li>Smart Moderator makes requests only to your configured endpoint over HTTPS</li>
+                    <li>No user tracking or telemetry</li>
+                    <li>For posts: sends title + content</li>
+                    <li>For comments: sends comment text only (not commenter name/email)</li>
+                </ul>
+
+                <div class="warning-box">
+                    <strong>Third-party services:</strong> This plugin sends data to your chosen AI provider (Anthropic or OpenAI) for moderation. Please review their privacy policies:
+                    <ul style="margin-top: 10px;">
+                        <li><a href="https://www.anthropic.com/privacy" target="_blank">Anthropic Privacy Policy</a></li>
+                        <li><a href="https://openai.com/policies/privacy-policy" target="_blank">OpenAI Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="pricing">
+                <h2>Supported AI Providers</h2>
+
+                <div class="pricing-table">
+                    <div class="pricing-card">
+                        <h4>Anthropic Claude (Recommended)</h4>
+                        <p><strong>Models:</strong></p>
+                        <ul>
+                            <li>claude-haiku-4-5</li>
+                            <li>claude-sonnet-4</li>
+                            <li>claude-opus-4-1</li>
+                        </ul>
+                        <p><strong>Cost:</strong> $1-$15 per million input tokens</p>
+                        <p>Free tier available</p>
+                        <p><a href="https://console.anthropic.com" target="_blank">Get API key →</a></p>
+                    </div>
+
+                    <div class="pricing-card">
+                        <h4>OpenAI GPT</h4>
+                        <p><strong>Models:</strong></p>
+                        <ul>
+                            <li>gpt-4o-mini</li>
+                            <li>gpt-4o</li>
+                            <li>gpt-4-turbo</li>
+                        </ul>
+                        <p><strong>Cost:</strong> $0.15-$30 per million input tokens</p>
+                        <p>Free trial available (very limited)</p>
+                        <p><a href="https://platform.openai.com/api-keys" target="_blank">Get API key →</a></p>
+                    </div>
+
+                    <div class="pricing-card">
+                        <h4>Custom Endpoints</h4>
+                        <p>Any API that accepts messages array and returns text output</p>
+                        <p style="margin-top: 20px;"><strong>Bring your own AI model</strong> with compatible API endpoints</p>
+                    </div>
+                </div>
+
+                <h3>Cost Examples</h3>
+                <ul>
+                    <li>Anthropic claude-haiku-4-5: ~$0.10 per 1,000 comments</li>
+                    <li>OpenAI gpt-4o-mini: ~$0.15 per 1,000 comments</li>
+                    <li>OpenAI gpt-4o: ~$2.50 per 1,000 comments</li>
+                </ul>
+                <p><strong>Typical blog with 100 comments/month:</strong> $0.01-$0.25/month</p>
+            </section>
+
+            <section id="installation">
+                <h2>Installation</h2>
+
+                <h3>Quick Install</h3>
+                <ol>
+                    <li>Upload plugin to <code>/wp-content/plugins/</code> directory</li>
+                    <li>Activate through <strong>Plugins → Installed Plugins</strong></li>
+                    <li>Go to <strong>Tools → Smart Moderator</strong></li>
+                    <li>Follow setup guide below for your chosen AI provider</li>
+                </ol>
+
+                <div class="info-box">
+                    <strong>Requirements:</strong>
+                    <ul style="margin-top: 10px;">
+                        <li>WordPress 6.0+ (tested up to 6.8)</li>
+                        <li>PHP 8.0+</li>
+                        <li>Outbound HTTPS connections enabled</li>
+                        <li>API key from Anthropic or OpenAI</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="setup">
+                <h2>Setup Guides</h2>
+
+                <div class="setup-box">
+                    <h3>Setup for Anthropic Claude</h3>
+
+                    <h4>Step 1: Get API Key</h4>
+                    <ol>
+                        <li>Visit <a href="https://console.anthropic.com" target="_blank">https://console.anthropic.com</a></li>
+                        <li>Sign up or sign in</li>
+                        <li>Go to API Keys section</li>
+                        <li>Create new key (name it "WordPress")</li>
+                        <li>Copy the key immediately (starts with <code>sk-ant-</code>)</li>
+                    </ol>
+
+                    <h4>Step 2: Configure Plugin</h4>
+                    <ol>
+                        <li>Go to <strong>Tools → Smart Moderator</strong> in WordPress</li>
+                        <li>Enter these exact settings:</li>
+                    </ol>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>API Key:</strong> Paste your full key (100+ characters)</li>
+                        <li><strong>API Endpoint URL:</strong> <code>https://api.anthropic.com/v1/messages</code></li>
+                        <li><strong>Auth Header Name:</strong> <code>x-api-key</code></li>
+                        <li><strong>Auth Header Prefix:</strong> Leave empty (do NOT type "Bearer")</li>
+                        <li><strong>Extra Headers:</strong> <code>{"anthropic-version":"2023-06-01"}</code></li>
+                        <li><strong>Model:</strong> <code>claude-sonnet-4-20250514</code> (recommended)</li>
+                    </ul>
+                    <ol start="3">
+                        <li>Click <strong>Save & Test Connection</strong></li>
+                        <li>Look for green success message</li>
+                    </ol>
+
+                    <h4>Recommended Models:</h4>
+                    <ul>
+                        <li><code>claude-haiku-4-5</code> - Fastest, cheapest ($1/M tokens)</li>
+                        <li><code>claude-sonnet-4-20250514</code> - Balanced ($3/M tokens) ✓</li>
+                        <li><code>claude-opus-4-1-20250805</code> - Most powerful ($15/M tokens)</li>
+                    </ul>
+                </div>
+
+                <div class="setup-box">
+                    <h3>Setup for OpenAI GPT</h3>
+
+                    <h4>Step 1: Get API Key</h4>
+                    <ol>
+                        <li>Visit <a href="https://platform.openai.com" target="_blank">https://platform.openai.com</a></li>
+                        <li>Sign up or sign in</li>
+                        <li>Go to API Keys section</li>
+                        <li>Create new secret key</li>
+                        <li>Copy immediately (starts with <code>sk-</code> or <code>sk-proj-</code>)</li>
+                        <li>Add billing info and credits to your account</li>
+                    </ol>
+
+                    <h4>Step 2: Configure Plugin</h4>
+                    <ol>
+                        <li>Go to <strong>Tools → Smart Moderator</strong></li>
+                        <li>Enter these exact settings:</li>
+                    </ol>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>API Key:</strong> Paste your full key</li>
+                        <li><strong>API Endpoint URL:</strong> <code>https://api.openai.com/v1/chat/completions</code></li>
+                        <li><strong>Auth Header Name:</strong> <code>Authorization</code></li>
+                        <li><strong>Auth Header Prefix:</strong> <code>Bearer</code> (capital B)</li>
+                        <li><strong>Extra Headers:</strong> Leave empty</li>
+                        <li><strong>Model:</strong> <code>gpt-4o</code> (recommended)</li>
+                    </ul>
+                    <ol start="3">
+                        <li>Click <strong>Save & Test Connection</strong></li>
+                        <li>Look for green success message</li>
+                    </ol>
+
+                    <h4>Recommended Models:</h4>
+                    <ul>
+                        <li><code>gpt-4o-mini</code> - Cheapest ($0.15/M tokens) ✓ For comments</li>
+                        <li><code>gpt-4o</code> - Balanced ($2.50/M tokens) ✓</li>
+                        <li><code>gpt-4-turbo</code> - More powerful ($10/M tokens)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="faq">
+                <h2>Frequently Asked Questions</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">Does Smart Moderator require OpenAI?</div>
+                    <p>No. You can use Anthropic Claude, OpenAI GPT, or any API endpoint that accepts a "messages" array and returns text output.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">What happens if the API fails?</div>
+                    <p>If the request fails or credentials are missing, Smart Moderator defaults to "approve" to avoid blocking your publishing workflow.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Can admins override moderation?</div>
+                    <p>Yes - if "Enforce moderation result" is OFF, manual WordPress status changes will not be re-checked.</p>
+                    <p>If "Enforce moderation result" is ON, the plugin will re-apply the AI decision after 60 seconds, even if an admin changed it manually.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">What content gets sent to the AI?</div>
+                    <p>For posts: title + content (combined as one text)<br>
+                    For comments: comment text only (not name/email)</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Does it work with comment spam plugins?</div>
+                    <p>Yes. Smart Moderator runs after most spam filters, so it acts as a second layer of defense.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Can I moderate custom post types?</div>
+                    <p>Yes. The plugin moderates all public post types except pages and attachments.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Connection test fails - what do I do?</div>
+                    <p><strong>For Anthropic users:</strong></p>
+                    <ol>
+                        <li>Auth Header Prefix must be EMPTY (not "Bearer")</li>
+                        <li>Re-enter API key: delete all dots first, then paste fresh key</li>
+                        <li>Auth Header Name must be lowercase: <code>x-api-key</code></li>
+                        <li>Extra Headers must include: <code>{"anthropic-version":"2023-06-01"}</code></li>
+                    </ol>
+                    <p><strong>For OpenAI users:</strong></p>
+                    <ol>
+                        <li>Auth Header Prefix must be <code>Bearer</code> (capital B)</li>
+                        <li>Re-enter API key: delete all dots first, then paste fresh key</li>
+                        <li>Auth Header Name must be: <code>Authorization</code> (capital A)</li>
+                        <li>Check billing at <a href="https://platform.openai.com/account/billing" target="_blank">https://platform.openai.com/account/billing</a></li>
+                    </ol>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Is this compatible with caching or security plugins?</div>
+                    <p>Yes. It does not modify front-end behavior or rely on cookies.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Does this track users?</div>
+                    <p>No. Smart Moderator does not collect or transmit any user data except the content being moderated to your configured AI endpoint.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Can I see what the AI decided?</div>
+                    <p>Yes. Moderation logs are stored as metadata on each post/comment, including the decision (approve/reject), reason, and timestamp. View logs in the <strong>Tools → Smart Moderator → Logs</strong> tab.</p>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Does it work with multisite?</div>
+                    <p>Yes. Each site in a multisite network has its own settings.</p>
+                </div>
+            </section>
+
+            <section id="compatibility">
+                <h2>Compatibility</h2>
+                <ul>
+                    <li>WordPress 6.0+ (tested up to 6.8)</li>
+                    <li>PHP 8.0+</li>
+                    <li>Works with: WooCommerce, bbPress, BuddyPress, and most comment plugins</li>
+                    <li>Compatible with: All major caching plugins, security plugins</li>
+                </ul>
+
+                <h3>Performance</h3>
+                <ul>
+                    <li>Minimal impact on site speed (moderation runs asynchronously)</li>
+                    <li>No front-end JavaScript or CSS</li>
+                    <li>No database queries on front-end</li>
+                </ul>
+
+                <h3>Security</h3>
+                <ul>
+                    <li>No eval(), exec(), or dangerous functions</li>
+                    <li>All database queries use $wpdb->prepare()</li>
+                    <li>All output escaped</li>
+                    <li>All input validated and sanitized</li>
+                    <li>API keys never appear in logs or debug output</li>
+                </ul>
+            </section>
+
+            <section id="changelog">
+                <h2>Changelog</h2>
+
+                <h3>Version 1.1.0</h3>
+                <ul>
+                    <li>Initial public release</li>
+                    <li>AI-powered moderation for posts and comments</li>
+                    <li>Support for Anthropic Claude and OpenAI GPT APIs</li>
+                    <li>Custom moderation prompts per content type</li>
+                    <li>"Enforce moderation result" feature - re-checks after 60s to prevent overrides</li>
+                    <li>Comprehensive error handling with user-friendly messages</li>
+                    <li>Detailed moderation logging</li>
+                    <li>Secure API key storage</li>
+                    <li>Full WordPress.org compliance</li>
+                </ul>
+            </section>
+
+            <section id="support">
+                <h2>Support</h2>
+                <p>For support, bug reports, or feature requests, please contact the plugin author.</p>
+
+                <div class="info-box">
+                    <strong>Debugging tip:</strong> Enable WordPress debug logging (WP_DEBUG_LOG) to see detailed connection information in <code>/wp-content/debug.log</code> if you encounter issues.
+                </div>
+            </section>
+
+            <section id="download">
+                <h2>Get Started</h2>
+                <p>Get started with Smart Moderator today and protect your WordPress site from spam and harmful content.</p>
+                <p>Contact the plugin author for installation instructions and access.</p>
+            </section>
+        </div>
+
+        <footer>
+            <p><strong>Smart Moderator</strong> - AI-Powered Content Moderation for WordPress</p>
+            <p style="margin-top: 10px;">Version 1.1.0 | Licensed under GPLv2 or later</p>
+            <p style="margin-top: 10px;">&copy; 2025 Linda Scoon. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
