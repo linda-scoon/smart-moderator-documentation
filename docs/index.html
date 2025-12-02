@@ -239,10 +239,10 @@
         <div class="content">
             <section id="about">
                 <h2>About</h2>
-                <p>Smart Moderator automatically reviews new posts and comments using AI (OpenAI GPT or Anthropic Claude) to prevent spam, abuse, and harmful content before publication.</p>
+                <p>Smart Moderator automatically reviews new posts and comments using AI (OpenAI GPT or Anthropic Claude) to prevent spam, abuse, and harmful content before publication. Administrators bypass all AI moderation to save API costs and enable quick publishing.</p>
 
                 <div class="info-box">
-                    <strong>AI-powered protection for your WordPress site</strong> - Content is reviewed by your configured AI model via secure API to keep your site safe and spam-free.
+                    <strong>AI-powered protection for your WordPress site</strong> - Content from non-admin users is reviewed by your configured AI model via secure API to keep your site safe and spam-free. Admin content is never sent to AI.
                 </div>
             </section>
 
@@ -250,9 +250,12 @@
                 <h2>Key Features</h2>
                 <ul class="features">
                     <li><strong>AI-driven moderation</strong> – Content is reviewed by your configured AI model via secure API</li>
+                    <li><strong>Admin bypass</strong> – Administrators skip AI moderation entirely (no API cost for admin actions)</li>
+                    <li><strong>Admin override system</strong> – Admins can manually approve AI-rejected content without re-moderation loops</li>
                     <li><strong>Custom prompts</strong> – Define global moderation rules and add context for posts or comments separately</li>
                     <li><strong>Immediate moderation</strong> – Content is approved or rejected as soon as it's saved</li>
-                    <li><strong>Enforce moderation result</strong> – Re-checks and re-applies AI decision after 60 seconds to prevent overrides from other plugins</li>
+                    <li><strong>Enforce moderation result</strong> – Re-checks and re-applies AI decision after 60 seconds to prevent overrides from other plugins (respects admin overrides)</li>
+                    <li><strong>API failure rate limiting</strong> – Automatically pauses API calls after repeated failures to prevent hammering the endpoint</li>
                     <li><strong>Full logs</strong> – All moderation decisions are stored per post/comment for transparency</li>
                     <li><strong>Secure storage</strong> – API keys kept in database, never logged, transmitted only via HTTPS</li>
                     <li><strong>Compatible</strong> – Works with WordPress comment moderation settings and other plugins</li>
@@ -263,16 +266,26 @@
                 <h2>How It Works</h2>
                 <ol>
                     <li>User submits a post or comment</li>
-                    <li>Smart Moderator sends it to your AI endpoint (OpenAI, Anthropic, or custom)</li>
+                    <li><strong>Check if the user is an administrator:</strong>
+                        <ul>
+                            <li>✅ <strong>If admin</strong> → Skip all moderation, publish immediately (no API cost)</li>
+                            <li>❌ <strong>If non-admin</strong> → Continue to step 3</li>
+                        </ul>
+                    </li>
+                    <li>Smart Moderator sends content to your AI endpoint (OpenAI, Anthropic, or custom)</li>
                     <li>AI returns "approve" or "reject" with optional reason</li>
-                    <li>Plugin updates post/comment status:
+                    <li>Plugin updates post/comment status immediately:
                         <ul>
                             <li>Approved → published (if permissions allow)</li>
                             <li>Rejected → held as pending/unapproved</li>
                         </ul>
                     </li>
-                    <li>If <strong>"Enforce moderation result"</strong> is enabled, plugin re-checks after <strong>60 seconds</strong> to ensure no other plugin or user overrode the decision</li>
+                    <li>If <strong>"Enforce moderation result"</strong> is enabled, plugin schedules a check 60 seconds later to re-apply the AI's decision if anything changed (respects admin overrides)</li>
                 </ol>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <strong>🔑 Admin Override System:</strong> When an admin manually publishes previously AI-rejected content, the plugin sets an "admin override" flag to prevent re-moderation loops. The delayed enforcement respects these admin decisions. If a non-admin later edits that content, the override flag is cleared and AI moderation runs again.
+                </div>
             </section>
 
             <section id="privacy">
@@ -282,8 +295,9 @@
                     <li>Logs include only decision outcomes, reasons, and timestamps - not full content</li>
                     <li>Smart Moderator makes requests only to your configured endpoint over HTTPS</li>
                     <li>No user tracking or telemetry</li>
-                    <li>For posts: sends title + content</li>
-                    <li>For comments: sends comment text only (not commenter name/email)</li>
+                    <li><strong>Admin content never sent to AI:</strong> Administrators bypass all moderation (no API calls)</li>
+                    <li>For posts: sends title + content (non-admin users only)</li>
+                    <li>For comments: sends comment text only, not commenter name/email (non-admin users only)</li>
                 </ul>
 
                 <div class="warning-box">
@@ -304,8 +318,9 @@
                         <p><strong>Models:</strong></p>
                         <ul>
                             <li>claude-haiku-4-5</li>
-                            <li>claude-sonnet-4</li>
-                            <li>claude-opus-4-1</li>
+                            <li>claude-sonnet-4-20250514</li>
+                            <li>claude-sonnet-4-5-20250929</li>
+                            <li>claude-opus-4-1-20250805</li>
                         </ul>
                         <p><strong>Cost:</strong> $1-$15 per million input tokens</p>
                         <p>Free tier available</p>
@@ -319,6 +334,7 @@
                             <li>gpt-4o-mini</li>
                             <li>gpt-4o</li>
                             <li>gpt-4-turbo</li>
+                            <li>gpt-4</li>
                         </ul>
                         <p><strong>Cost:</strong> $0.15-$30 per million input tokens</p>
                         <p>Free trial available (very limited)</p>
@@ -355,7 +371,7 @@
                 <div class="info-box">
                     <strong>Requirements:</strong>
                     <ul style="margin-top: 10px;">
-                        <li>WordPress 6.0+ (tested up to 6.8)</li>
+                        <li>WordPress 6.0+ (tested up to 6.7)</li>
                         <li>PHP 8.0+</li>
                         <li>Outbound HTTPS connections enabled</li>
                         <li>API key from Anthropic or OpenAI</li>
@@ -398,9 +414,10 @@
 
                     <h4>Recommended Models:</h4>
                     <ul>
-                        <li><code>claude-haiku-4-5</code> - Fastest, cheapest ($1/M tokens)</li>
-                        <li><code>claude-sonnet-4-20250514</code> - Balanced ($3/M tokens) ✓</li>
-                        <li><code>claude-opus-4-1-20250805</code> - Most powerful ($15/M tokens)</li>
+                        <li><code>claude-haiku-4-5</code> - Fastest, most economical ($1/M tokens)</li>
+                        <li><code>claude-sonnet-4-20250514</code> - Balanced performance ($3/M tokens) ✓ Recommended</li>
+                        <li><code>claude-sonnet-4-5-20250929</code> - Most powerful coding/reasoning ($3/M tokens)</li>
+                        <li><code>claude-opus-4-1-20250805</code> - Maximum intelligence ($15/M tokens)</li>
                     </ul>
                 </div>
 
@@ -437,9 +454,10 @@
 
                     <h4>Recommended Models:</h4>
                     <ul>
-                        <li><code>gpt-4o-mini</code> - Cheapest ($0.15/M tokens) ✓ For comments</li>
-                        <li><code>gpt-4o</code> - Balanced ($2.50/M tokens) ✓</li>
-                        <li><code>gpt-4-turbo</code> - More powerful ($10/M tokens)</li>
+                        <li><code>gpt-4o-mini</code> - Fastest, most economical ($0.15/M tokens) ✓ Good for comments</li>
+                        <li><code>gpt-4o</code> - Balanced, general purpose ($2.50/M tokens) ✓ Recommended</li>
+                        <li><code>gpt-4-turbo</code> - Enhanced performance ($10/M tokens)</li>
+                        <li><code>gpt-4</code> - Original GPT-4 ($30/M tokens)</li>
                     </ul>
                 </div>
             </section>
@@ -455,12 +473,18 @@
                 <div class="faq-item">
                     <div class="faq-question">What happens if the API fails?</div>
                     <p>If the request fails or credentials are missing, Smart Moderator defaults to "approve" to avoid blocking your publishing workflow.</p>
+                    <p><strong>API Failure Rate Limiting:</strong> After 5 consecutive API failures within 1 hour, the plugin automatically pauses API calls to prevent hammering the endpoint. Content will be auto-approved during this period. Rate limiting resets automatically on the first successful API response.</p>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">Can admins override moderation?</div>
-                    <p>Yes - if "Enforce moderation result" is OFF, manual WordPress status changes will not be re-checked.</p>
-                    <p>If "Enforce moderation result" is ON, the plugin will re-apply the AI decision after 60 seconds, even if an admin changed it manually.</p>
+                    <p>Yes - admins can always override AI decisions:</p>
+                    <ul>
+                        <li>When an admin manually publishes AI-rejected content, an "admin override" flag is set</li>
+                        <li>The delayed enforcement (if enabled) respects admin overrides and won't revert them</li>
+                        <li>If a non-admin later edits that content, the override flag is cleared and AI moderation runs again</li>
+                        <li>Admins bypass all AI moderation entirely (no API calls for admin-created content)</li>
+                    </ul>
                 </div>
 
                 <div class="faq-item">
@@ -476,7 +500,7 @@
 
                 <div class="faq-item">
                     <div class="faq-question">Can I moderate custom post types?</div>
-                    <p>Yes. The plugin moderates all public post types except pages and attachments.</p>
+                    <p>Yes. The plugin moderates all public post types except pages and attachments. Note: Content created by administrators is never moderated (admin bypass).</p>
                 </div>
 
                 <div class="faq-item">
@@ -509,7 +533,7 @@
 
                 <div class="faq-item">
                     <div class="faq-question">Can I see what the AI decided?</div>
-                    <p>Yes. Moderation logs are stored as metadata on each post/comment, including the decision (approve/reject), reason, and timestamp. View logs in the <strong>Tools → Smart Moderator → Logs</strong> tab.</p>
+                    <p>Yes. Moderation logs are stored as metadata on each post/comment, including the decision (approve/reject), reason, and timestamp. Logs are currently stored in post/comment metadata (<code>_smartmoderator_log</code>) and visible in debug logs. A UI for viewing logs is coming in a future version.</p>
                 </div>
 
                 <div class="faq-item">
@@ -521,7 +545,7 @@
             <section id="compatibility">
                 <h2>Compatibility</h2>
                 <ul>
-                    <li>WordPress 6.0+ (tested up to 6.8)</li>
+                    <li>WordPress 6.0+ (tested up to 6.7)</li>
                     <li>PHP 8.0+</li>
                     <li>Works with: WooCommerce, bbPress, BuddyPress, and most comment plugins</li>
                     <li>Compatible with: All major caching plugins, security plugins</li>
@@ -547,17 +571,19 @@
             <section id="changelog">
                 <h2>Changelog</h2>
 
-                <h3>Version 1.1.0</h3>
+                <h3>Version 1.1.0 - Initial Release</h3>
                 <ul>
-                    <li>Initial public release</li>
-                    <li>AI-powered moderation for posts and comments</li>
-                    <li>Support for Anthropic Claude and OpenAI GPT APIs</li>
-                    <li>Custom moderation prompts per content type</li>
-                    <li>"Enforce moderation result" feature - re-checks after 60s to prevent overrides</li>
-                    <li>Comprehensive error handling with user-friendly messages</li>
-                    <li>Detailed moderation logging</li>
-                    <li>Secure API key storage</li>
-                    <li>Full WordPress.org compliance</li>
+                    <li><strong>AI-Powered Moderation:</strong> Real-time content analysis for posts and comments using OpenAI, Anthropic Claude, or compatible LLM APIs</li>
+                    <li><strong>Admin Bypass System:</strong> Administrators skip all AI moderation (saves API costs, prevents loops)</li>
+                    <li><strong>Admin Override Flag:</strong> Prevents re-moderation when admins consciously override AI decisions</li>
+                    <li><strong>Delayed Enforcement:</strong> Optional 60-second re-check to ensure moderation decisions remain final</li>
+                    <li><strong>API Failure Rate Limiting:</strong> Automatically pauses API calls after 5 consecutive failures to prevent endpoint hammering</li>
+                    <li><strong>OpenAI Compatibility:</strong> Auto-detects and uses max_completion_tokens for newer OpenAI models (o1, gpt-4o variants)</li>
+                    <li><strong>Custom Prompts:</strong> Separate moderation rules for posts and comments</li>
+                    <li><strong>Detailed Logging:</strong> Every decision recorded with timestamp, reason, and decision type</li>
+                    <li><strong>Complete Uninstall:</strong> Removes all metadata, options, and transients when uninstalled</li>
+                    <li><strong>WordPress.org Compliance:</strong> Full adherence to WordPress plugin directory guidelines</li>
+                    <li><strong>Comprehensive Documentation:</strong> Official API references, troubleshooting guides, and setup instructions</li>
                 </ul>
             </section>
 
