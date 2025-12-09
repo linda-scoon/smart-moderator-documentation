@@ -239,24 +239,30 @@
         <div class="content">
             <section id="about">
                 <h2>About</h2>
-                <p>Smart Moderator automatically reviews new posts and comments using AI (OpenAI GPT or Anthropic Claude) to prevent spam, abuse, and harmful content before publication. Administrators bypass all AI moderation to save API costs and enable quick publishing.</p>
+                <p>Smart Moderator v2.0.0 automatically reviews new posts and comments using AI (OpenAI GPT or Anthropic Claude) to prevent spam, abuse, and harmful content before publication. Administrators bypass all AI moderation to save API costs and enable quick publishing.</p>
 
                 <div class="info-box">
                     <strong>AI-powered protection for your WordPress site</strong> - Content from non-admin users is reviewed by your configured AI model via secure API to keep your site safe and spam-free. Admin content is never sent to AI.
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Breaking Change in v2.0.0:</strong> Smart Moderator now explicitly supports only OpenAI and Anthropic Claude APIs (no longer API-agnostic). This architectural change removes 114 lines of code, eliminates token limit issues, and provides better optimization for supported providers.
                 </div>
             </section>
 
             <section id="features">
                 <h2>Key Features</h2>
                 <ul class="features">
-                    <li><strong>AI-driven moderation</strong> – Content is reviewed by your configured AI model via secure API</li>
+                    <li><strong>AI-driven moderation</strong> – Content is reviewed by OpenAI or Anthropic Claude via secure API</li>
                     <li><strong>Admin bypass</strong> – Administrators skip AI moderation entirely (no API cost for admin actions)</li>
                     <li><strong>Admin override system</strong> – Admins can manually approve AI-rejected content without re-moderation loops</li>
                     <li><strong>Custom prompts</strong> – Define global moderation rules and add context for posts or comments separately</li>
                     <li><strong>Immediate moderation</strong> – Content is approved or rejected as soon as it's saved</li>
                     <li><strong>Enforce moderation result</strong> – Re-checks and re-applies AI decision after 60 seconds to prevent overrides from other plugins (respects admin overrides)</li>
                     <li><strong>API failure rate limiting</strong> – Automatically pauses API calls after repeated failures to prevent hammering the endpoint</li>
-                    <li><strong>Full logs</strong> – All moderation decisions are stored per post/comment for transparency</li>
+                    <li><strong>Full logs (reverse chronological)</strong> – All moderation decisions stored per post/comment, ordered by most recent first</li>
+                    <li><strong>Automatic model detection for OpenAI</strong> – No configuration needed for token limits</li>
+                    <li><strong>GPT-5 reasoning optimization</strong> – Automatically uses low reasoning effort for efficient moderation</li>
                     <li><strong>Secure storage</strong> – API keys kept in database, never logged, transmitted only via HTTPS</li>
                     <li><strong>Compatible</strong> – Works with WordPress comment moderation settings and other plugins</li>
                 </ul>
@@ -272,7 +278,7 @@
                             <li>❌ <strong>If non-admin</strong> → Continue to step 3</li>
                         </ul>
                     </li>
-                    <li>Smart Moderator sends content to your AI endpoint (OpenAI, Anthropic, or custom)</li>
+                    <li>Smart Moderator sends content to your AI endpoint (OpenAI or Anthropic Claude)</li>
                     <li>AI returns "approve" or "reject" with optional reason</li>
                     <li>Plugin updates post/comment status immediately:
                         <ul>
@@ -310,51 +316,78 @@
             </section>
 
             <section id="pricing">
-                <h2>Supported AI Providers</h2>
+                <h2>Supported AI Models (2025)</h2>
 
                 <div class="pricing-table">
                     <div class="pricing-card">
-                        <h4>Anthropic Claude (Recommended)</h4>
-                        <p><strong>Models:</strong></p>
+                        <h4>OpenAI Models (2025)</h4>
+                        <p><strong>GPT-4o Series:</strong></p>
                         <ul>
-                            <li>claude-haiku-4-5</li>
-                            <li>claude-sonnet-4-20250514</li>
-                            <li>claude-sonnet-4-5-20250929</li>
-                            <li>claude-opus-4-1-20250805</li>
+                            <li>gpt-4o-mini ($0.15/M)</li>
+                            <li>gpt-4o ($2.50/M) ✓</li>
+                            <li>chatgpt-4o-latest</li>
                         </ul>
-                        <p><strong>Cost:</strong> $1-$15 per million input tokens</p>
-                        <p>Free tier available</p>
-                        <p><a href="https://console.anthropic.com" target="_blank">Get API key →</a></p>
-                    </div>
-
-                    <div class="pricing-card">
-                        <h4>OpenAI GPT</h4>
-                        <p><strong>Models:</strong></p>
+                        <p><strong>GPT-5 Series (NEW):</strong></p>
                         <ul>
-                            <li>gpt-4o-mini</li>
-                            <li>gpt-4o</li>
-                            <li>gpt-4-turbo</li>
-                            <li>gpt-4</li>
+                            <li>gpt-5-nano ($0.05/M in, $0.40/M out)</li>
+                            <li>gpt-5-mini</li>
+                            <li>gpt-5</li>
                         </ul>
-                        <p><strong>Cost:</strong> $0.15-$30 per million input tokens</p>
-                        <p>Free trial available (very limited)</p>
+                        <p><strong>O1 Series:</strong></p>
+                        <ul>
+                            <li>o1, o1-preview, o1-mini</li>
+                        </ul>
+                        <p><strong>Legacy:</strong> GPT-3.5 Turbo, GPT-4, GPT-4 Turbo</p>
+                        <p><strong>Technical Note:</strong> No token limits enforced. GPT-5 uses reasoning_effort: "low" automatically.</p>
                         <p><a href="https://platform.openai.com/api-keys" target="_blank">Get API key →</a></p>
                     </div>
 
                     <div class="pricing-card">
-                        <h4>Custom Endpoints</h4>
-                        <p>Any API that accepts messages array and returns text output</p>
-                        <p style="margin-top: 20px;"><strong>Bring your own AI model</strong> with compatible API endpoints</p>
+                        <h4>Claude Models (2025)</h4>
+                        <p><strong>Claude 4.x:</strong></p>
+                        <ul>
+                            <li>claude-haiku-4-5 ($1/M)</li>
+                            <li>claude-sonnet-4 ($3/M) ✓</li>
+                            <li>claude-opus-4-5 ($15/M)</li>
+                        </ul>
+                        <p><strong>Claude 3.x:</strong></p>
+                        <ul>
+                            <li>claude-haiku-3</li>
+                            <li>claude-sonnet-3.5</li>
+                            <li>claude-opus-3</li>
+                        </ul>
+                        <p><strong>Claude 2.x:</strong></p>
+                        <ul>
+                            <li>claude-2.1, claude-2.0</li>
+                        </ul>
+                        <p><strong>Technical Note:</strong> Uses Messages API with 1024 token limit (API requirement).</p>
+                        <p><a href="https://console.anthropic.com" target="_blank">Get API key →</a></p>
                     </div>
                 </div>
 
+                <h3>Recommended Models</h3>
+                <p><strong>OpenAI:</strong></p>
+                <ul>
+                    <li>gpt-4o-mini - Fastest, most economical ($0.15/M)</li>
+                    <li>gpt-4o - Balanced performance ($2.50/M) ✅ Recommended</li>
+                    <li>gpt-5-nano - Ultra-fast reasoning model ($0.05/M input, $0.40/M output)</li>
+                </ul>
+                <p><strong>Claude:</strong></p>
+                <ul>
+                    <li>claude-haiku-4-5 - Fastest ($1/M)</li>
+                    <li>claude-sonnet-4-20250514 - Balanced ($3/M) ✅ Recommended</li>
+                    <li>claude-opus-4-1-20250805 - Maximum intelligence ($15/M)</li>
+                </ul>
+
                 <h3>Cost Examples</h3>
                 <ul>
-                    <li>Anthropic claude-haiku-4-5: ~$0.10 per 1,000 comments</li>
                     <li>OpenAI gpt-4o-mini: ~$0.15 per 1,000 comments</li>
                     <li>OpenAI gpt-4o: ~$2.50 per 1,000 comments</li>
+                    <li>OpenAI gpt-5-nano: ~$0.05-$0.40 per 1,000 comments</li>
+                    <li>Anthropic claude-haiku-4-5: ~$1.00 per 1,000 comments</li>
+                    <li>Anthropic claude-sonnet-4: ~$3.00 per 1,000 comments</li>
                 </ul>
-                <p><strong>Typical blog with 100 comments/month:</strong> $0.01-$0.25/month</p>
+                <p><strong>Typical blog with 100 comments/month:</strong> $0.01-$0.30/month</p>
             </section>
 
             <section id="installation">
@@ -371,10 +404,10 @@
                 <div class="info-box">
                     <strong>Requirements:</strong>
                     <ul style="margin-top: 10px;">
-                        <li>WordPress 6.0+ (tested up to 6.7)</li>
-                        <li>PHP 8.0+</li>
+                        <li>WordPress 6.0+ (tested up to 6.8)</li>
+                        <li>PHP 8.0+ (required)</li>
                         <li>Outbound HTTPS connections enabled</li>
-                        <li>API key from Anthropic or OpenAI</li>
+                        <li>API key from OpenAI or Anthropic (v2.0 supports only these providers)</li>
                     </ul>
                 </div>
             </section>
@@ -412,13 +445,13 @@
                         <li>Look for green success message</li>
                     </ol>
 
-                    <h4>Recommended Models:</h4>
+                    <h4>Recommended Models (2025):</h4>
                     <ul>
-                        <li><code>claude-haiku-4-5</code> - Fastest, most economical ($1/M tokens)</li>
-                        <li><code>claude-sonnet-4-20250514</code> - Balanced performance ($3/M tokens) ✓ Recommended</li>
-                        <li><code>claude-sonnet-4-5-20250929</code> - Most powerful coding/reasoning ($3/M tokens)</li>
+                        <li><code>claude-haiku-4-5</code> - Fastest ($1/M tokens)</li>
+                        <li><code>claude-sonnet-4-20250514</code> - Balanced ($3/M tokens) ✅ Recommended</li>
                         <li><code>claude-opus-4-1-20250805</code> - Maximum intelligence ($15/M tokens)</li>
                     </ul>
+                    <p><strong>Also Supported:</strong> Claude 3.x (Opus, Sonnet 3.5, Haiku), Claude 2.x (2.1, 2.0)</p>
                 </div>
 
                 <div class="setup-box">
@@ -452,13 +485,16 @@
                         <li>Look for green success message</li>
                     </ol>
 
-                    <h4>Recommended Models:</h4>
+                    <h4>Recommended Models (2025):</h4>
                     <ul>
-                        <li><code>gpt-4o-mini</code> - Fastest, most economical ($0.15/M tokens) ✓ Good for comments</li>
-                        <li><code>gpt-4o</code> - Balanced, general purpose ($2.50/M tokens) ✓ Recommended</li>
-                        <li><code>gpt-4-turbo</code> - Enhanced performance ($10/M tokens)</li>
-                        <li><code>gpt-4</code> - Original GPT-4 ($30/M tokens)</li>
+                        <li><code>gpt-4o-mini</code> - Fastest, most economical ($0.15/M)</li>
+                        <li><code>gpt-4o</code> - Balanced performance ($2.50/M) ✅ Recommended</li>
+                        <li><code>gpt-5-nano</code> - NEW: Ultra-fast reasoning ($0.05/M in, $0.40/M out)</li>
+                        <li><code>gpt-5-mini</code> - NEW: Mid-tier reasoning model</li>
+                        <li><code>gpt-5</code> - NEW: Advanced reasoning model</li>
                     </ul>
+                    <p><strong>Also Supported:</strong> O1 series (o1, o1-preview, o1-mini), GPT-4 Turbo, GPT-4, GPT-3.5 Turbo</p>
+                    <p><strong>Technical Note:</strong> GPT-5 models automatically use reasoning_effort: "low" for efficient moderation.</p>
                 </div>
             </section>
 
@@ -467,7 +503,7 @@
 
                 <div class="faq-item">
                     <div class="faq-question">Does Smart Moderator require OpenAI?</div>
-                    <p>No. You can use Anthropic Claude, OpenAI GPT, or any API endpoint that accepts a "messages" array and returns text output.</p>
+                    <p>No. Smart Moderator v2.0 supports both OpenAI GPT and Anthropic Claude APIs. You can use either provider based on your preference and budget.</p>
                 </div>
 
                 <div class="faq-item">
@@ -545,8 +581,10 @@
             <section id="compatibility">
                 <h2>Compatibility</h2>
                 <ul>
-                    <li>WordPress 6.0+ (tested up to 6.7)</li>
-                    <li>PHP 8.0+</li>
+                    <li>WordPress 6.0+ (tested up to 6.8)</li>
+                    <li>PHP 8.0+ (required)</li>
+                    <li>OpenAI API (all GPT models including GPT-5 series)</li>
+                    <li>Anthropic Claude API (all Claude 2.x, 3.x, and 4.x models)</li>
                     <li>Works with: WooCommerce, bbPress, BuddyPress, and most comment plugins</li>
                     <li>Compatible with: All major caching plugins, security plugins</li>
                 </ul>
@@ -556,6 +594,7 @@
                     <li>Minimal impact on site speed (moderation runs asynchronously)</li>
                     <li>No front-end JavaScript or CSS</li>
                     <li>No database queries on front-end</li>
+                    <li>Optimized for OpenAI and Claude APIs with automatic model detection</li>
                 </ul>
 
                 <h3>Security</h3>
@@ -570,6 +609,24 @@
 
             <section id="changelog">
                 <h2>Changelog</h2>
+
+                <h3>Version 2.0.0 - Major Release (2025)</h3>
+                <ul>
+                    <li><strong>⚠️ BREAKING:</strong> Now explicitly supports only OpenAI and Anthropic Claude (no longer API-agnostic)</li>
+                    <li><strong>NEW:</strong> Added GPT-5 support (gpt-5, gpt-5-mini, gpt-5-nano)</li>
+                    <li><strong>NEW:</strong> Automatic reasoning optimization for GPT-5 models (uses reasoning_effort: "low")</li>
+                    <li><strong>NEW:</strong> Support for all Claude 4.x models (Opus 4.5, Sonnet 4, Haiku 4.5)</li>
+                    <li><strong>IMPROVED:</strong> Removed token limits for OpenAI (simplified, no empty responses)</li>
+                    <li><strong>IMPROVED:</strong> Architecture redesign with SOLID principles (Strategy Pattern, Factory Pattern)</li>
+                    <li><strong>IMPROVED:</strong> 114 lines of code removed through simplification</li>
+                    <li><strong>IMPROVED:</strong> Immutable value objects for better code quality (PHP 8.0+)</li>
+                    <li><strong>IMPROVED:</strong> Logs ordered by most recent first (reverse chronological)</li>
+                    <li><strong>FIXED:</strong> Editor post updates now properly remoderated</li>
+                    <li><strong>FIXED:</strong> Claude max_tokens increased to 1024 (generous limit, API requirement)</li>
+                    <li><strong>UPDATED:</strong> All documentation to reflect OpenAI/Claude only support</li>
+                    <li><strong>UPDATED:</strong> WordPress tested up to 6.8</li>
+                    <li><strong>UPDATED:</strong> PHP 8.0+ now required</li>
+                </ul>
 
                 <h3>Version 1.1.0 - Initial Release</h3>
                 <ul>
@@ -605,7 +662,7 @@
 
         <footer>
             <p><strong>Smart Moderator</strong> - AI-Powered Content Moderation for WordPress</p>
-            <p style="margin-top: 10px;">Version 1.1.0 | Licensed under GPLv2 or later</p>
+            <p style="margin-top: 10px;">Version 2.0.0 | Licensed under GPLv2 or later</p>
             <p style="margin-top: 10px;">&copy; 2025 Linda Scoon. All rights reserved.</p>
         </footer>
     </div>
