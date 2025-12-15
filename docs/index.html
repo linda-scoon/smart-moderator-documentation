@@ -1,461 +1,819 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Moderator - AI-Powered WordPress Content Moderation</title>
-    <meta name="description" content="AI-powered automatic moderation for WordPress posts and comments using OpenAI or Anthropic Claude. Stops spam and harmful content before it's published.">
-    <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
+    <meta
+      name="description"
+      content="AI-powered automatic moderation for WordPress posts and comments using OpenAI or Anthropic Claude. Stops spam and harmful content before it's published."
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>Smart Moderator</h1>
-            <p class="tagline">AI-Powered Content Moderation for WordPress</p>
-            <p style="margin-top: 15px;">Stop spam and harmful content before it's published</p>
-        </header>
+      <header>
+        <h1>Smart Moderator</h1>
+        <p class="tagline">AI-Powered Content Moderation for WordPress</p>
+        <p style="margin-top: 15px">
+          Stop spam and harmful content before it's published
+        </p>
+      </header>
 
-        <nav class="nav">
-            <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#installation">Installation</a></li>
-                <li><a href="#setup">Setup</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#faq">FAQ</a></li>
-                <li><a href="#support">Support</a></li>
+      <nav class="nav">
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#installation">Installation</a></li>
+          <li><a href="#setup">Setup</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#support">Support</a></li>
+        </ul>
+      </nav>
+
+      <div class="content">
+        <section id="about">
+          <h2>About</h2>
+          <p>
+            Smart Moderator v2.0.0 automatically reviews new posts and comments
+            using AI (OpenAI GPT or Anthropic Claude) to prevent spam, abuse,
+            and harmful content before publication. Administrators bypass all AI
+            moderation to save API costs and enable quick publishing.
+          </p>
+
+          <div class="info-box">
+            <strong>AI-powered protection for your WordPress site</strong> -
+            Content from non-admin users is reviewed by your configured AI model
+            via secure API to keep your site safe and spam-free. Admin content
+            is never sent to AI.
+          </div>
+
+          <div class="warning-box">
+            <strong>⚠️ Breaking Change in v2.0.0:</strong> Smart Moderator now
+            explicitly supports only OpenAI and Anthropic Claude APIs (no longer
+            API-agnostic). This architectural change removes 114 lines of code,
+            eliminates token limit issues, and provides better optimization for
+            supported providers.
+          </div>
+        </section>
+
+        <section id="features">
+          <h2>Key Features</h2>
+          <ul class="features">
+            <li>
+              <strong>AI-driven moderation</strong> - Content is reviewed by
+              OpenAI or Anthropic Claude via secure API
+            </li>
+            <li>
+              <strong>Admin bypass</strong> - Administrators skip AI moderation
+              entirely (no API cost for admin actions)
+            </li>
+            <li>
+              <strong>Admin override system</strong> - Admins can manually
+              approve AI-rejected content without re-moderation loops
+            </li>
+            <li>
+              <strong>Custom prompts</strong> - Define global moderation rules
+              and add context for posts or comments separately
+            </li>
+            <li>
+              <strong>Immediate moderation</strong> - Content is approved or
+              rejected as soon as it's saved
+            </li>
+            <li>
+              <strong>Enforce moderation result</strong> - Re-checks and
+              re-applies AI decision after 60 seconds to prevent overrides from
+              other plugins (respects admin overrides)
+            </li>
+            <li>
+              <strong>API failure rate limiting</strong> - Automatically pauses
+              API calls after repeated failures to prevent hammering the
+              endpoint
+            </li>
+            <li>
+              <strong>Full logs (reverse chronological)</strong> - All
+              moderation decisions stored per post/comment, ordered by most
+              recent first
+            </li>
+            <li>
+              <strong>Automatic model detection for OpenAI</strong> - No
+              configuration needed for token limits
+            </li>
+            <li>
+              <strong>GPT-5 reasoning optimization</strong> - Automatically uses
+              low reasoning effort for efficient moderation
+            </li>
+            <li>
+              <strong>Secure storage</strong> - API keys kept in database, never
+              logged, transmitted only via HTTPS
+            </li>
+            <li>
+              <strong>Compatible</strong> - Works with WordPress comment
+              moderation settings and other plugins
+            </li>
+          </ul>
+        </section>
+
+        <section id="how-it-works">
+          <h2>How It Works</h2>
+          <ol>
+            <li>User submits a post or comment</li>
+            <li>
+              <strong>Check if the user is an administrator:</strong>
+              <ul>
+                <li>
+                  ✅ <strong>If admin</strong> → Skip all moderation, publish
+                  immediately (no API cost)
+                </li>
+                <li>❌ <strong>If non-admin</strong> → Continue to step 3</li>
+              </ul>
+            </li>
+            <li>
+              Smart Moderator sends content to your AI endpoint (OpenAI or
+              Anthropic Claude)
+            </li>
+            <li>AI returns "approve" or "reject" with optional reason</li>
+            <li>
+              Plugin updates post/comment status immediately:
+              <ul>
+                <li>Approved → published (if permissions allow)</li>
+                <li>Rejected → held as pending/unapproved</li>
+              </ul>
+            </li>
+            <li>
+              If <strong>"Enforce moderation result"</strong> is enabled, plugin
+              schedules a check 60 seconds later to re-apply the AI's decision
+              if anything changed (respects admin overrides)
+            </li>
+          </ol>
+
+          <div class="info-box" style="margin-top: 20px">
+            <strong>🔑 Admin Override System:</strong> When an admin manually
+            publishes previously AI-rejected content, the plugin sets an "admin
+            override" flag to prevent re-moderation loops. The delayed
+            enforcement respects these admin decisions. If a non-admin later
+            edits that content, the override flag is cleared and AI moderation
+            runs again.
+          </div>
+        </section>
+
+        <section id="privacy">
+          <h2>Privacy & Data Handling</h2>
+          <ul>
+            <li>API key stored locally in WordPress database</li>
+            <li>
+              Logs include only decision outcomes, reasons, and timestamps - not
+              full content
+            </li>
+            <li>
+              Smart Moderator makes requests only to your configured endpoint
+              over HTTPS
+            </li>
+            <li>No user tracking or telemetry</li>
+            <li>
+              <strong>Admin content never sent to AI:</strong> Administrators
+              bypass all moderation (no API calls)
+            </li>
+            <li>For posts: sends title + content (non-admin users only)</li>
+            <li>
+              For comments: sends comment text only, not commenter name/email
+              (non-admin users only)
+            </li>
+          </ul>
+
+          <div class="warning-box">
+            <strong>Third-party services:</strong> This plugin sends data to
+            your chosen AI provider (Anthropic or OpenAI) for moderation. Please
+            review their privacy policies:
+            <ul style="margin-top: 10px">
+              <li>
+                <a href="https://www.anthropic.com/privacy" target="_blank"
+                  >Anthropic Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://openai.com/policies/privacy-policy"
+                  target="_blank"
+                  >OpenAI Privacy Policy</a
+                >
+              </li>
             </ul>
-        </nav>
+          </div>
+        </section>
 
-        <div class="content">
-            <section id="about">
-                <h2>About</h2>
-                <p>Smart Moderator v2.0.0 automatically reviews new posts and comments using AI (OpenAI GPT or Anthropic Claude) to prevent spam, abuse, and harmful content before publication. Administrators bypass all AI moderation to save API costs and enable quick publishing.</p>
+        <section id="pricing">
+          <h2>Supported AI Models (2025)</h2>
 
-                <div class="info-box">
-                    <strong>AI-powered protection for your WordPress site</strong> - Content from non-admin users is reviewed by your configured AI model via secure API to keep your site safe and spam-free. Admin content is never sent to AI.
-                </div>
+          <div class="pricing-table">
+            <div class="pricing-card">
+              <h4>OpenAI Models (2025)</h4>
+              <p><strong>GPT-4o Series:</strong></p>
+              <ul>
+                <li>gpt-4o-mini ($0.15/M)</li>
+                <li>gpt-4o ($2.50/M) ✓</li>
+                <li>chatgpt-4o-latest</li>
+              </ul>
+              <p><strong>GPT-5 Series (NEW):</strong></p>
+              <ul>
+                <li>gpt-5-nano ($0.05/M in, $0.40/M out)</li>
+                <li>gpt-5-mini</li>
+                <li>gpt-5</li>
+              </ul>
+              <p><strong>O1 Series:</strong></p>
+              <ul>
+                <li>o1, o1-preview, o1-mini</li>
+              </ul>
+              <p><strong>Legacy:</strong> GPT-3.5 Turbo, GPT-4, GPT-4 Turbo</p>
+              <p>
+                <strong>Technical Note:</strong> No token limits enforced. GPT-5
+                uses reasoning_effort: "low" automatically.
+              </p>
+              <p>
+                <a href="https://platform.openai.com/api-keys" target="_blank"
+                  >Get API key →</a
+                >
+              </p>
+            </div>
 
-                <div class="warning-box">
-                    <strong>⚠️ Breaking Change in v2.0.0:</strong> Smart Moderator now explicitly supports only OpenAI and Anthropic Claude APIs (no longer API-agnostic). This architectural change removes 114 lines of code, eliminates token limit issues, and provides better optimization for supported providers.
-                </div>
-            </section>
+            <div class="pricing-card">
+              <h4>Claude Models (2025)</h4>
+              <p><strong>Claude 4.x:</strong></p>
+              <ul>
+                <li>claude-haiku-4-5 ($1/M)</li>
+                <li>claude-sonnet-4 ($3/M) ✓</li>
+                <li>claude-opus-4-5 ($15/M)</li>
+              </ul>
+              <p><strong>Claude 3.x:</strong></p>
+              <ul>
+                <li>claude-haiku-3</li>
+                <li>claude-sonnet-3.5</li>
+                <li>claude-opus-3</li>
+              </ul>
+              <p><strong>Claude 2.x:</strong></p>
+              <ul>
+                <li>claude-2.1, claude-2.0</li>
+              </ul>
+              <p>
+                <strong>Technical Note:</strong> Uses Messages API with 1024
+                token limit (API requirement).
+              </p>
+              <p>
+                <a href="https://console.anthropic.com" target="_blank"
+                  >Get API key →</a
+                >
+              </p>
+            </div>
+          </div>
 
-           <section id="features">
-    <h2>Key Features</h2>
-    <ul class="features">
-        <li><strong>AI-driven moderation</strong> - Content is reviewed by OpenAI or Anthropic Claude via secure API</li>
-        <li><strong>Admin bypass</strong> - Administrators skip AI moderation entirely (no API cost for admin actions)</li>
-        <li><strong>Admin override system</strong> - Admins can manually approve AI-rejected content without re-moderation loops</li>
-        <li><strong>Custom prompts</strong> - Define global moderation rules and add context for posts or comments separately</li>
-        <li><strong>Immediate moderation</strong> - Content is approved or rejected as soon as it's saved</li>
-        <li><strong>Enforce moderation result</strong> - Re-checks and re-applies AI decision after 60 seconds to prevent overrides from other plugins (respects admin overrides)</li>
-        <li><strong>API failure rate limiting</strong> - Automatically pauses API calls after repeated failures to prevent hammering the endpoint</li>
-        <li><strong>Full logs (reverse chronological)</strong> - All moderation decisions stored per post/comment, ordered by most recent first</li>
-        <li><strong>Automatic model detection for OpenAI</strong> - No configuration needed for token limits</li>
-        <li><strong>GPT-5 reasoning optimization</strong> - Automatically uses low reasoning effort for efficient moderation</li>
-        <li><strong>Secure storage</strong> - API keys kept in database, never logged, transmitted only via HTTPS</li>
-        <li><strong>Compatible</strong> - Works with WordPress comment moderation settings and other plugins</li>
-    </ul>
-</section>
+          <h3>Recommended Models</h3>
+          <p><strong>OpenAI:</strong></p>
+          <ul>
+            <li>gpt-4o-mini - Fastest, most economical ($0.15/M)</li>
+            <li>gpt-4o - Balanced performance ($2.50/M) ✅ Recommended</li>
+            <li>
+              gpt-5-nano - Ultra-fast reasoning model ($0.05/M input, $0.40/M
+              output)
+            </li>
+          </ul>
+          <p><strong>Claude:</strong></p>
+          <ul>
+            <li>claude-haiku-4-5 - Fastest ($1/M)</li>
+            <li>claude-sonnet-4-20250514 - Balanced ($3/M) ✅ Recommended</li>
+            <li>claude-opus-4-1-20250805 - Maximum intelligence ($15/M)</li>
+          </ul>
 
+          <h3>Cost Examples</h3>
+          <ul>
+            <li>OpenAI gpt-4o-mini: ~$0.15 per 1,000 comments</li>
+            <li>OpenAI gpt-4o: ~$2.50 per 1,000 comments</li>
+            <li>OpenAI gpt-5-nano: ~$0.05-$0.40 per 1,000 comments</li>
+            <li>Anthropic claude-haiku-4-5: ~$1.00 per 1,000 comments</li>
+            <li>Anthropic claude-sonnet-4: ~$3.00 per 1,000 comments</li>
+          </ul>
+          <p>
+            <strong>Typical blog with 100 comments/month:</strong>
+            $0.01-$0.30/month
+          </p>
+        </section>
 
-            <section id="how-it-works">
-                <h2>How It Works</h2>
-                <ol>
-                    <li>User submits a post or comment</li>
-                    <li><strong>Check if the user is an administrator:</strong>
-                        <ul>
-                            <li>✅ <strong>If admin</strong> → Skip all moderation, publish immediately (no API cost)</li>
-                            <li>❌ <strong>If non-admin</strong> → Continue to step 3</li>
-                        </ul>
-                    </li>
-                    <li>Smart Moderator sends content to your AI endpoint (OpenAI or Anthropic Claude)</li>
-                    <li>AI returns "approve" or "reject" with optional reason</li>
-                    <li>Plugin updates post/comment status immediately:
-                        <ul>
-                            <li>Approved → published (if permissions allow)</li>
-                            <li>Rejected → held as pending/unapproved</li>
-                        </ul>
-                    </li>
-                    <li>If <strong>"Enforce moderation result"</strong> is enabled, plugin schedules a check 60 seconds later to re-apply the AI's decision if anything changed (respects admin overrides)</li>
-                </ol>
+        <section id="installation">
+          <h2>Installation</h2>
 
-                <div class="info-box" style="margin-top: 20px;">
-                    <strong>🔑 Admin Override System:</strong> When an admin manually publishes previously AI-rejected content, the plugin sets an "admin override" flag to prevent re-moderation loops. The delayed enforcement respects these admin decisions. If a non-admin later edits that content, the override flag is cleared and AI moderation runs again.
-                </div>
-            </section>
+          <h3>Quick Install</h3>
+          <ol>
+            <li>
+              Upload plugin to <code>/wp-content/plugins/</code> directory
+            </li>
+            <li>
+              Activate through <strong>Plugins → Installed Plugins</strong>
+            </li>
+            <li>Go to <strong>Tools → Smart Moderator</strong></li>
+            <li>Follow setup guide below for your chosen AI provider</li>
+          </ol>
 
-            <section id="privacy">
-                <h2>Privacy & Data Handling</h2>
-                <ul>
-                    <li>API key stored locally in WordPress database</li>
-                    <li>Logs include only decision outcomes, reasons, and timestamps - not full content</li>
-                    <li>Smart Moderator makes requests only to your configured endpoint over HTTPS</li>
-                    <li>No user tracking or telemetry</li>
-                    <li><strong>Admin content never sent to AI:</strong> Administrators bypass all moderation (no API calls)</li>
-                    <li>For posts: sends title + content (non-admin users only)</li>
-                    <li>For comments: sends comment text only, not commenter name/email (non-admin users only)</li>
-                </ul>
+          <div class="info-box">
+            <strong>Requirements:</strong>
+            <ul style="margin-top: 10px">
+              <li>WordPress 6.0+ (tested up to 6.8)</li>
+              <li>PHP 8.0+ (required)</li>
+              <li>Outbound HTTPS connections enabled</li>
+              <li>
+                API key from OpenAI or Anthropic (v2.0 supports only these
+                providers)
+              </li>
+            </ul>
+          </div>
+        </section>
 
-                <div class="warning-box">
-                    <strong>Third-party services:</strong> This plugin sends data to your chosen AI provider (Anthropic or OpenAI) for moderation. Please review their privacy policies:
-                    <ul style="margin-top: 10px;">
-                        <li><a href="https://www.anthropic.com/privacy" target="_blank">Anthropic Privacy Policy</a></li>
-                        <li><a href="https://openai.com/policies/privacy-policy" target="_blank">OpenAI Privacy Policy</a></li>
-                    </ul>
-                </div>
-            </section>
+        <section id="setup">
+          <h2>Setup Guides</h2>
 
-            <section id="pricing">
-                <h2>Supported AI Models (2025)</h2>
+          <div class="setup-box">
+            <h3>Setup for Anthropic Claude</h3>
 
-                <div class="pricing-table">
-                    <div class="pricing-card">
-                        <h4>OpenAI Models (2025)</h4>
-                        <p><strong>GPT-4o Series:</strong></p>
-                        <ul>
-                            <li>gpt-4o-mini ($0.15/M)</li>
-                            <li>gpt-4o ($2.50/M) ✓</li>
-                            <li>chatgpt-4o-latest</li>
-                        </ul>
-                        <p><strong>GPT-5 Series (NEW):</strong></p>
-                        <ul>
-                            <li>gpt-5-nano ($0.05/M in, $0.40/M out)</li>
-                            <li>gpt-5-mini</li>
-                            <li>gpt-5</li>
-                        </ul>
-                        <p><strong>O1 Series:</strong></p>
-                        <ul>
-                            <li>o1, o1-preview, o1-mini</li>
-                        </ul>
-                        <p><strong>Legacy:</strong> GPT-3.5 Turbo, GPT-4, GPT-4 Turbo</p>
-                        <p><strong>Technical Note:</strong> No token limits enforced. GPT-5 uses reasoning_effort: "low" automatically.</p>
-                        <p><a href="https://platform.openai.com/api-keys" target="_blank">Get API key →</a></p>
-                    </div>
+            <h4>Step 1: Get API Key</h4>
+            <ol>
+              <li>
+                Visit
+                <a href="https://console.anthropic.com" target="_blank"
+                  >https://console.anthropic.com</a
+                >
+              </li>
+              <li>Sign up or sign in</li>
+              <li>Go to API Keys section</li>
+              <li>Create new key (name it "WordPress")</li>
+              <li>
+                Copy the key immediately (starts with <code>sk-ant-</code>)
+              </li>
+            </ol>
 
-                    <div class="pricing-card">
-                        <h4>Claude Models (2025)</h4>
-                        <p><strong>Claude 4.x:</strong></p>
-                        <ul>
-                            <li>claude-haiku-4-5 ($1/M)</li>
-                            <li>claude-sonnet-4 ($3/M) ✓</li>
-                            <li>claude-opus-4-5 ($15/M)</li>
-                        </ul>
-                        <p><strong>Claude 3.x:</strong></p>
-                        <ul>
-                            <li>claude-haiku-3</li>
-                            <li>claude-sonnet-3.5</li>
-                            <li>claude-opus-3</li>
-                        </ul>
-                        <p><strong>Claude 2.x:</strong></p>
-                        <ul>
-                            <li>claude-2.1, claude-2.0</li>
-                        </ul>
-                        <p><strong>Technical Note:</strong> Uses Messages API with 1024 token limit (API requirement).</p>
-                        <p><a href="https://console.anthropic.com" target="_blank">Get API key →</a></p>
-                    </div>
-                </div>
+            <h4>Step 2: Configure Plugin</h4>
+            <ol>
+              <li>
+                Go to <strong>Tools → Smart Moderator</strong> in WordPress
+              </li>
+              <li>Enter these exact settings:</li>
+            </ol>
+            <ul style="margin-left: 20px">
+              <li>
+                <strong>API Key:</strong> Paste your full key (100+ characters)
+              </li>
+              <li>
+                <strong>API Endpoint URL:</strong>
+                <code>https://api.anthropic.com/v1/messages</code>
+              </li>
+              <li><strong>Auth Header Name:</strong> <code>x-api-key</code></li>
+              <li>
+                <strong>Auth Header Prefix:</strong> Leave empty (do NOT type
+                "Bearer")
+              </li>
+              <li>
+                <strong>Extra Headers:</strong>
+                <code>{"anthropic-version":"2023-06-01"}</code>
+              </li>
+              <li>
+                <strong>Model:</strong>
+                <code>claude-sonnet-4-20250514</code> (recommended)
+              </li>
+            </ul>
+            <ol start="3">
+              <li>Click <strong>Save & Test Connection</strong></li>
+              <li>Look for green success message</li>
+            </ol>
 
-                <h3>Recommended Models</h3>
-                <p><strong>OpenAI:</strong></p>
-                <ul>
-                    <li>gpt-4o-mini - Fastest, most economical ($0.15/M)</li>
-                    <li>gpt-4o - Balanced performance ($2.50/M) ✅ Recommended</li>
-                    <li>gpt-5-nano - Ultra-fast reasoning model ($0.05/M input, $0.40/M output)</li>
-                </ul>
-                <p><strong>Claude:</strong></p>
-                <ul>
-                    <li>claude-haiku-4-5 - Fastest ($1/M)</li>
-                    <li>claude-sonnet-4-20250514 - Balanced ($3/M) ✅ Recommended</li>
-                    <li>claude-opus-4-1-20250805 - Maximum intelligence ($15/M)</li>
-                </ul>
+            <h4>Recommended Models (2025):</h4>
+            <ul>
+              <li><code>claude-haiku-4-5</code> - Fastest ($1/M tokens)</li>
+              <li>
+                <code>claude-sonnet-4-20250514</code> - Balanced ($3/M tokens)
+                ✅ Recommended
+              </li>
+              <li>
+                <code>claude-opus-4-1-20250805</code> - Maximum intelligence
+                ($15/M tokens)
+              </li>
+            </ul>
+            <p>
+              <strong>Also Supported:</strong> Claude 3.x (Opus, Sonnet 3.5,
+              Haiku), Claude 2.x (2.1, 2.0)
+            </p>
+          </div>
 
-                <h3>Cost Examples</h3>
-                <ul>
-                    <li>OpenAI gpt-4o-mini: ~$0.15 per 1,000 comments</li>
-                    <li>OpenAI gpt-4o: ~$2.50 per 1,000 comments</li>
-                    <li>OpenAI gpt-5-nano: ~$0.05-$0.40 per 1,000 comments</li>
-                    <li>Anthropic claude-haiku-4-5: ~$1.00 per 1,000 comments</li>
-                    <li>Anthropic claude-sonnet-4: ~$3.00 per 1,000 comments</li>
-                </ul>
-                <p><strong>Typical blog with 100 comments/month:</strong> $0.01-$0.30/month</p>
-            </section>
+          <div class="setup-box">
+            <h3>Setup for OpenAI GPT</h3>
 
-            <section id="installation">
-                <h2>Installation</h2>
+            <h4>Step 1: Get API Key</h4>
+            <ol>
+              <li>
+                Visit
+                <a href="https://platform.openai.com" target="_blank"
+                  >https://platform.openai.com</a
+                >
+              </li>
+              <li>Sign up or sign in</li>
+              <li>Go to API Keys section</li>
+              <li>Create new secret key</li>
+              <li>
+                Copy immediately (starts with <code>sk-</code> or
+                <code>sk-proj-</code>)
+              </li>
+              <li>Add billing info and credits to your account</li>
+            </ol>
 
-                <h3>Quick Install</h3>
-                <ol>
-                    <li>Upload plugin to <code>/wp-content/plugins/</code> directory</li>
-                    <li>Activate through <strong>Plugins → Installed Plugins</strong></li>
-                    <li>Go to <strong>Tools → Smart Moderator</strong></li>
-                    <li>Follow setup guide below for your chosen AI provider</li>
-                </ol>
+            <h4>Step 2: Configure Plugin</h4>
+            <ol>
+              <li>Go to <strong>Tools → Smart Moderator</strong></li>
+              <li>Enter these exact settings:</li>
+            </ol>
+            <ul style="margin-left: 20px">
+              <li><strong>API Key:</strong> Paste your full key</li>
+              <li>
+                <strong>API Endpoint URL:</strong>
+                <code>https://api.openai.com/v1/chat/completions</code>
+              </li>
+              <li>
+                <strong>Auth Header Name:</strong> <code>Authorization</code>
+              </li>
+              <li>
+                <strong>Auth Header Prefix:</strong>
+                <code>Bearer</code> (capital B)
+              </li>
+              <li><strong>Extra Headers:</strong> Leave empty</li>
+              <li><strong>Model:</strong> <code>gpt-4o</code> (recommended)</li>
+            </ul>
+            <ol start="3">
+              <li>Click <strong>Save & Test Connection</strong></li>
+              <li>Look for green success message</li>
+            </ol>
 
-                <div class="info-box">
-                    <strong>Requirements:</strong>
-                    <ul style="margin-top: 10px;">
-                        <li>WordPress 6.0+ (tested up to 6.8)</li>
-                        <li>PHP 8.0+ (required)</li>
-                        <li>Outbound HTTPS connections enabled</li>
-                        <li>API key from OpenAI or Anthropic (v2.0 supports only these providers)</li>
-                    </ul>
-                </div>
-            </section>
+            <h4>Recommended Models (2025):</h4>
+            <ul>
+              <li>
+                <code>gpt-4o-mini</code> - Fastest, most economical ($0.15/M)
+              </li>
+              <li>
+                <code>gpt-4o</code> - Balanced performance ($2.50/M) ✅
+                Recommended
+              </li>
+              <li>
+                <code>gpt-5-nano</code> - NEW: Ultra-fast reasoning ($0.05/M in,
+                $0.40/M out)
+              </li>
+              <li><code>gpt-5-mini</code> - NEW: Mid-tier reasoning model</li>
+              <li><code>gpt-5</code> - NEW: Advanced reasoning model</li>
+            </ul>
+            <p>
+              <strong>Also Supported:</strong> O1 series (o1, o1-preview,
+              o1-mini), GPT-4 Turbo, GPT-4, GPT-3.5 Turbo
+            </p>
+            <p>
+              <strong>Technical Note:</strong> GPT-5 models automatically use
+              reasoning_effort: "low" for efficient moderation.
+            </p>
+          </div>
+        </section>
 
-            <section id="setup">
-                <h2>Setup Guides</h2>
+        <section id="faq">
+          <h2>Frequently Asked Questions</h2>
 
-                <div class="setup-box">
-                    <h3>Setup for Anthropic Claude</h3>
+          <div class="faq-item">
+            <div class="faq-question">Does Smart Moderator require OpenAI?</div>
+            <p>
+              No. Smart Moderator v2.0 supports both OpenAI GPT and Anthropic
+              Claude APIs. You can use either provider based on your preference
+              and budget.
+            </p>
+          </div>
 
-                    <h4>Step 1: Get API Key</h4>
-                    <ol>
-                        <li>Visit <a href="https://console.anthropic.com" target="_blank">https://console.anthropic.com</a></li>
-                        <li>Sign up or sign in</li>
-                        <li>Go to API Keys section</li>
-                        <li>Create new key (name it "WordPress")</li>
-                        <li>Copy the key immediately (starts with <code>sk-ant-</code>)</li>
-                    </ol>
+          <div class="faq-item">
+            <div class="faq-question">What happens if the API fails?</div>
+            <p>
+              If the request fails or credentials are missing, Smart Moderator
+              defaults to "approve" to avoid blocking your publishing workflow.
+            </p>
+            <p>
+              <strong>API Failure Rate Limiting:</strong> After 5 consecutive
+              API failures within 1 hour, the plugin automatically pauses API
+              calls to prevent hammering the endpoint. Content will be
+              auto-approved during this period. Rate limiting resets
+              automatically on the first successful API response.
+            </p>
+          </div>
 
-                    <h4>Step 2: Configure Plugin</h4>
-                    <ol>
-                        <li>Go to <strong>Tools → Smart Moderator</strong> in WordPress</li>
-                        <li>Enter these exact settings:</li>
-                    </ol>
-                    <ul style="margin-left: 20px;">
-                        <li><strong>API Key:</strong> Paste your full key (100+ characters)</li>
-                        <li><strong>API Endpoint URL:</strong> <code>https://api.anthropic.com/v1/messages</code></li>
-                        <li><strong>Auth Header Name:</strong> <code>x-api-key</code></li>
-                        <li><strong>Auth Header Prefix:</strong> Leave empty (do NOT type "Bearer")</li>
-                        <li><strong>Extra Headers:</strong> <code>{"anthropic-version":"2023-06-01"}</code></li>
-                        <li><strong>Model:</strong> <code>claude-sonnet-4-20250514</code> (recommended)</li>
-                    </ul>
-                    <ol start="3">
-                        <li>Click <strong>Save & Test Connection</strong></li>
-                        <li>Look for green success message</li>
-                    </ol>
+          <div class="faq-item">
+            <div class="faq-question">Can admins override moderation?</div>
+            <p>Yes - admins can always override AI decisions:</p>
+            <ul>
+              <li>
+                When an admin manually publishes AI-rejected content, an "admin
+                override" flag is set
+              </li>
+              <li>
+                The delayed enforcement (if enabled) respects admin overrides
+                and won't revert them
+              </li>
+              <li>
+                If a non-admin later edits that content, the override flag is
+                cleared and AI moderation runs again
+              </li>
+              <li>
+                Admins bypass all AI moderation entirely (no API calls for
+                admin-created content)
+              </li>
+            </ul>
+          </div>
 
-                    <h4>Recommended Models (2025):</h4>
-                    <ul>
-                        <li><code>claude-haiku-4-5</code> - Fastest ($1/M tokens)</li>
-                        <li><code>claude-sonnet-4-20250514</code> - Balanced ($3/M tokens) ✅ Recommended</li>
-                        <li><code>claude-opus-4-1-20250805</code> - Maximum intelligence ($15/M tokens)</li>
-                    </ul>
-                    <p><strong>Also Supported:</strong> Claude 3.x (Opus, Sonnet 3.5, Haiku), Claude 2.x (2.1, 2.0)</p>
-                </div>
+          <div class="faq-item">
+            <div class="faq-question">What content gets sent to the AI?</div>
+            <p>
+              For posts: title + content (combined as one text)<br />
+              For comments: comment text only (not name/email)
+            </p>
+          </div>
 
-                <div class="setup-box">
-                    <h3>Setup for OpenAI GPT</h3>
+          <div class="faq-item">
+            <div class="faq-question">
+              Does it work with comment spam plugins?
+            </div>
+            <p>
+              Yes. Smart Moderator runs after most spam filters, so it acts as a
+              second layer of defense.
+            </p>
+          </div>
 
-                    <h4>Step 1: Get API Key</h4>
-                    <ol>
-                        <li>Visit <a href="https://platform.openai.com" target="_blank">https://platform.openai.com</a></li>
-                        <li>Sign up or sign in</li>
-                        <li>Go to API Keys section</li>
-                        <li>Create new secret key</li>
-                        <li>Copy immediately (starts with <code>sk-</code> or <code>sk-proj-</code>)</li>
-                        <li>Add billing info and credits to your account</li>
-                    </ol>
+          <div class="faq-item">
+            <div class="faq-question">Can I moderate custom post types?</div>
+            <p>
+              Yes. The plugin moderates all public post types except pages and
+              attachments. Note: Content created by administrators is never
+              moderated (admin bypass).
+            </p>
+          </div>
 
-                    <h4>Step 2: Configure Plugin</h4>
-                    <ol>
-                        <li>Go to <strong>Tools → Smart Moderator</strong></li>
-                        <li>Enter these exact settings:</li>
-                    </ol>
-                    <ul style="margin-left: 20px;">
-                        <li><strong>API Key:</strong> Paste your full key</li>
-                        <li><strong>API Endpoint URL:</strong> <code>https://api.openai.com/v1/chat/completions</code></li>
-                        <li><strong>Auth Header Name:</strong> <code>Authorization</code></li>
-                        <li><strong>Auth Header Prefix:</strong> <code>Bearer</code> (capital B)</li>
-                        <li><strong>Extra Headers:</strong> Leave empty</li>
-                        <li><strong>Model:</strong> <code>gpt-4o</code> (recommended)</li>
-                    </ul>
-                    <ol start="3">
-                        <li>Click <strong>Save & Test Connection</strong></li>
-                        <li>Look for green success message</li>
-                    </ol>
+          <div class="faq-item">
+            <div class="faq-question">
+              Connection test fails - what do I do?
+            </div>
+            <p><strong>For Anthropic users:</strong></p>
+            <ol>
+              <li>Auth Header Prefix must be EMPTY (not "Bearer")</li>
+              <li>
+                Re-enter API key: delete all dots first, then paste fresh key
+              </li>
+              <li>
+                Auth Header Name must be lowercase: <code>x-api-key</code>
+              </li>
+              <li>
+                Extra Headers must include:
+                <code>{"anthropic-version":"2023-06-01"}</code>
+              </li>
+            </ol>
+            <p><strong>For OpenAI users:</strong></p>
+            <ol>
+              <li>
+                Auth Header Prefix must be <code>Bearer</code> (capital B)
+              </li>
+              <li>
+                Re-enter API key: delete all dots first, then paste fresh key
+              </li>
+              <li>
+                Auth Header Name must be: <code>Authorization</code> (capital A)
+              </li>
+              <li>
+                Check billing at
+                <a
+                  href="https://platform.openai.com/account/billing"
+                  target="_blank"
+                  >https://platform.openai.com/account/billing</a
+                >
+              </li>
+            </ol>
+          </div>
 
-                    <h4>Recommended Models (2025):</h4>
-                    <ul>
-                        <li><code>gpt-4o-mini</code> - Fastest, most economical ($0.15/M)</li>
-                        <li><code>gpt-4o</code> - Balanced performance ($2.50/M) ✅ Recommended</li>
-                        <li><code>gpt-5-nano</code> - NEW: Ultra-fast reasoning ($0.05/M in, $0.40/M out)</li>
-                        <li><code>gpt-5-mini</code> - NEW: Mid-tier reasoning model</li>
-                        <li><code>gpt-5</code> - NEW: Advanced reasoning model</li>
-                    </ul>
-                    <p><strong>Also Supported:</strong> O1 series (o1, o1-preview, o1-mini), GPT-4 Turbo, GPT-4, GPT-3.5 Turbo</p>
-                    <p><strong>Technical Note:</strong> GPT-5 models automatically use reasoning_effort: "low" for efficient moderation.</p>
-                </div>
-            </section>
+          <div class="faq-item">
+            <div class="faq-question">
+              Is this compatible with caching or security plugins?
+            </div>
+            <p>
+              Yes. It does not modify front-end behavior or rely on cookies.
+            </p>
+          </div>
 
-            <section id="faq">
-                <h2>Frequently Asked Questions</h2>
+          <div class="faq-item">
+            <div class="faq-question">Does this track users?</div>
+            <p>
+              No. Smart Moderator does not collect or transmit any user data
+              except the content being moderated to your configured AI endpoint.
+            </p>
+          </div>
 
-                <div class="faq-item">
-                    <div class="faq-question">Does Smart Moderator require OpenAI?</div>
-                    <p>No. Smart Moderator v2.0 supports both OpenAI GPT and Anthropic Claude APIs. You can use either provider based on your preference and budget.</p>
-                </div>
+          <div class="faq-item">
+            <div class="faq-question">Can I see what the AI decided?</div>
+            <p>
+              Yes. Moderation logs are stored as metadata on each post/comment,
+              including the decision (approve/reject), reason, and timestamp.
+              Logs are currently stored in post/comment metadata
+              (<code>_smartmoderator_log</code>) and visible in debug logs. A UI
+              for viewing logs is coming in a future version.
+            </p>
+          </div>
 
-                <div class="faq-item">
-                    <div class="faq-question">What happens if the API fails?</div>
-                    <p>If the request fails or credentials are missing, Smart Moderator defaults to "approve" to avoid blocking your publishing workflow.</p>
-                    <p><strong>API Failure Rate Limiting:</strong> After 5 consecutive API failures within 1 hour, the plugin automatically pauses API calls to prevent hammering the endpoint. Content will be auto-approved during this period. Rate limiting resets automatically on the first successful API response.</p>
-                </div>
+          <div class="faq-item">
+            <div class="faq-question">Does it work with multisite?</div>
+            <p>Yes. Each site in a multisite network has its own settings.</p>
+          </div>
+        </section>
 
-                <div class="faq-item">
-                    <div class="faq-question">Can admins override moderation?</div>
-                    <p>Yes - admins can always override AI decisions:</p>
-                    <ul>
-                        <li>When an admin manually publishes AI-rejected content, an "admin override" flag is set</li>
-                        <li>The delayed enforcement (if enabled) respects admin overrides and won't revert them</li>
-                        <li>If a non-admin later edits that content, the override flag is cleared and AI moderation runs again</li>
-                        <li>Admins bypass all AI moderation entirely (no API calls for admin-created content)</li>
-                    </ul>
-                </div>
+        <section id="compatibility">
+          <h2>Compatibility</h2>
+          <ul>
+            <li>WordPress 6.0+ (tested up to 6.8)</li>
+            <li>PHP 8.0+ (required)</li>
+            <li>OpenAI API (all GPT models including GPT-5 series)</li>
+            <li>Anthropic Claude API (all Claude 2.x, 3.x, and 4.x models)</li>
+            <li>
+              Works with: WooCommerce, bbPress, BuddyPress, and most comment
+              plugins
+            </li>
+            <li>
+              Compatible with: All major caching plugins, security plugins
+            </li>
+          </ul>
 
-                <div class="faq-item">
-                    <div class="faq-question">What content gets sent to the AI?</div>
-                    <p>For posts: title + content (combined as one text)<br>
-                    For comments: comment text only (not name/email)</p>
-                </div>
+          <h3>Performance</h3>
+          <ul>
+            <li>
+              Minimal impact on site speed (moderation runs asynchronously)
+            </li>
+            <li>No front-end JavaScript or CSS</li>
+            <li>No database queries on front-end</li>
+            <li>
+              Optimized for OpenAI and Claude APIs with automatic model
+              detection
+            </li>
+          </ul>
 
-                <div class="faq-item">
-                    <div class="faq-question">Does it work with comment spam plugins?</div>
-                    <p>Yes. Smart Moderator runs after most spam filters, so it acts as a second layer of defense.</p>
-                </div>
+          <h3>Security</h3>
+          <ul>
+            <li>No eval(), exec(), or dangerous functions</li>
+            <li>All database queries use $wpdb->prepare()</li>
+            <li>All output escaped</li>
+            <li>All input validated and sanitized</li>
+            <li>API keys never appear in logs or debug output</li>
+          </ul>
+        </section>
 
-                <div class="faq-item">
-                    <div class="faq-question">Can I moderate custom post types?</div>
-                    <p>Yes. The plugin moderates all public post types except pages and attachments. Note: Content created by administrators is never moderated (admin bypass).</p>
-                </div>
+        <section id="changelog">
+          <h2>Changelog</h2>
 
-                <div class="faq-item">
-                    <div class="faq-question">Connection test fails - what do I do?</div>
-                    <p><strong>For Anthropic users:</strong></p>
-                    <ol>
-                        <li>Auth Header Prefix must be EMPTY (not "Bearer")</li>
-                        <li>Re-enter API key: delete all dots first, then paste fresh key</li>
-                        <li>Auth Header Name must be lowercase: <code>x-api-key</code></li>
-                        <li>Extra Headers must include: <code>{"anthropic-version":"2023-06-01"}</code></li>
-                    </ol>
-                    <p><strong>For OpenAI users:</strong></p>
-                    <ol>
-                        <li>Auth Header Prefix must be <code>Bearer</code> (capital B)</li>
-                        <li>Re-enter API key: delete all dots first, then paste fresh key</li>
-                        <li>Auth Header Name must be: <code>Authorization</code> (capital A)</li>
-                        <li>Check billing at <a href="https://platform.openai.com/account/billing" target="_blank">https://platform.openai.com/account/billing</a></li>
-                    </ol>
-                </div>
+          <h3>Version 2.0.0 - Major Release (2025)</h3>
+          <ul>
+            <li>
+              <strong>⚠️ BREAKING:</strong> Now explicitly supports only OpenAI
+              and Anthropic Claude (no longer API-agnostic)
+            </li>
+            <li>
+              <strong>NEW:</strong> Added GPT-5 support (gpt-5, gpt-5-mini,
+              gpt-5-nano)
+            </li>
+            <li>
+              <strong>NEW:</strong> Automatic reasoning optimization for GPT-5
+              models (uses reasoning_effort: "low")
+            </li>
+            <li>
+              <strong>NEW:</strong> Support for all Claude 4.x models (Opus 4.5,
+              Sonnet 4, Haiku 4.5)
+            </li>
+            <li>
+              <strong>IMPROVED:</strong> Removed token limits for OpenAI
+              (simplified, no empty responses)
+            </li>
+            <li>
+              <strong>IMPROVED:</strong> Architecture redesign with SOLID
+              principles (Strategy Pattern, Factory Pattern)
+            </li>
+            <li>
+              <strong>IMPROVED:</strong> 114 lines of code removed through
+              simplification
+            </li>
+            <li>
+              <strong>IMPROVED:</strong> Immutable value objects for better code
+              quality (PHP 8.0+)
+            </li>
+            <li>
+              <strong>IMPROVED:</strong> Logs ordered by most recent first
+              (reverse chronological)
+            </li>
+            <li>
+              <strong>FIXED:</strong> Editor post updates now properly
+              remoderated
+            </li>
+            <li>
+              <strong>FIXED:</strong> Claude max_tokens increased to 1024
+              (generous limit, API requirement)
+            </li>
+            <li>
+              <strong>UPDATED:</strong> All documentation to reflect
+              OpenAI/Claude only support
+            </li>
+            <li><strong>UPDATED:</strong> WordPress tested up to 6.8</li>
+            <li><strong>UPDATED:</strong> PHP 8.0+ now required</li>
+          </ul>
 
-                <div class="faq-item">
-                    <div class="faq-question">Is this compatible with caching or security plugins?</div>
-                    <p>Yes. It does not modify front-end behavior or rely on cookies.</p>
-                </div>
+          <h3>Version 1.1.0 - Initial Release</h3>
+          <ul>
+            <li>
+              <strong>AI-Powered Moderation:</strong> Real-time content analysis
+              for posts and comments using OpenAI, Anthropic Claude, or
+              compatible LLM APIs
+            </li>
+            <li>
+              <strong>Admin Bypass System:</strong> Administrators skip all AI
+              moderation (saves API costs, prevents loops)
+            </li>
+            <li>
+              <strong>Admin Override Flag:</strong> Prevents re-moderation when
+              admins consciously override AI decisions
+            </li>
+            <li>
+              <strong>Delayed Enforcement:</strong> Optional 60-second re-check
+              to ensure moderation decisions remain final
+            </li>
+            <li>
+              <strong>API Failure Rate Limiting:</strong> Automatically pauses
+              API calls after 5 consecutive failures to prevent endpoint
+              hammering
+            </li>
+            <li>
+              <strong>OpenAI Compatibility:</strong> Auto-detects and uses
+              max_completion_tokens for newer OpenAI models (o1, gpt-4o
+              variants)
+            </li>
+            <li>
+              <strong>Custom Prompts:</strong> Separate moderation rules for
+              posts and comments
+            </li>
+            <li>
+              <strong>Detailed Logging:</strong> Every decision recorded with
+              timestamp, reason, and decision type
+            </li>
+            <li>
+              <strong>Complete Uninstall:</strong> Removes all metadata,
+              options, and transients when uninstalled
+            </li>
+            <li>
+              <strong>WordPress.org Compliance:</strong> Full adherence to
+              WordPress plugin directory guidelines
+            </li>
+            <li>
+              <strong>Comprehensive Documentation:</strong> Official API
+              references, troubleshooting guides, and setup instructions
+            </li>
+          </ul>
+        </section>
 
-                <div class="faq-item">
-                    <div class="faq-question">Does this track users?</div>
-                    <p>No. Smart Moderator does not collect or transmit any user data except the content being moderated to your configured AI endpoint.</p>
-                </div>
+        <section id="support">
+          <h2>Support</h2>
+          <p>
+            For support, bug reports, or feature requests, please contact the
+            plugin author at
+            <a href="mailto:linda.scoon@purplefootsteps.co.uk"
+              >linda.scoon@purplefootsteps.co.uk</a
+            >.
+          </p>
 
-                <div class="faq-item">
-                    <div class="faq-question">Can I see what the AI decided?</div>
-                    <p>Yes. Moderation logs are stored as metadata on each post/comment, including the decision (approve/reject), reason, and timestamp. Logs are currently stored in post/comment metadata (<code>_smartmoderator_log</code>) and visible in debug logs. A UI for viewing logs is coming in a future version.</p>
-                </div>
+          <div class="info-box">
+            <strong>Debugging tip:</strong> Enable WordPress debug logging
+            (WP_DEBUG_LOG) to see detailed connection information in
+            <code>/wp-content/debug.log</code> if you encounter issues.
+          </div>
+        </section>
 
-                <div class="faq-item">
-                    <div class="faq-question">Does it work with multisite?</div>
-                    <p>Yes. Each site in a multisite network has its own settings.</p>
-                </div>
-            </section>
+        <section id="download">
+          <h2>Get Started</h2>
+          <p>
+            Get started with Smart Moderator today and protect your WordPress
+            site from spam and harmful content.
+          </p>
+          <p>
+            Contact the plugin author for installation instructions and access.
+          </p>
+        </section>
+      </div>
 
-            <section id="compatibility">
-                <h2>Compatibility</h2>
-                <ul>
-                    <li>WordPress 6.0+ (tested up to 6.8)</li>
-                    <li>PHP 8.0+ (required)</li>
-                    <li>OpenAI API (all GPT models including GPT-5 series)</li>
-                    <li>Anthropic Claude API (all Claude 2.x, 3.x, and 4.x models)</li>
-                    <li>Works with: WooCommerce, bbPress, BuddyPress, and most comment plugins</li>
-                    <li>Compatible with: All major caching plugins, security plugins</li>
-                </ul>
-
-                <h3>Performance</h3>
-                <ul>
-                    <li>Minimal impact on site speed (moderation runs asynchronously)</li>
-                    <li>No front-end JavaScript or CSS</li>
-                    <li>No database queries on front-end</li>
-                    <li>Optimized for OpenAI and Claude APIs with automatic model detection</li>
-                </ul>
-
-                <h3>Security</h3>
-                <ul>
-                    <li>No eval(), exec(), or dangerous functions</li>
-                    <li>All database queries use $wpdb->prepare()</li>
-                    <li>All output escaped</li>
-                    <li>All input validated and sanitized</li>
-                    <li>API keys never appear in logs or debug output</li>
-                </ul>
-            </section>
-
-            <section id="changelog">
-                <h2>Changelog</h2>
-
-                <h3>Version 2.0.0 - Major Release (2025)</h3>
-                <ul>
-                    <li><strong>⚠️ BREAKING:</strong> Now explicitly supports only OpenAI and Anthropic Claude (no longer API-agnostic)</li>
-                    <li><strong>NEW:</strong> Added GPT-5 support (gpt-5, gpt-5-mini, gpt-5-nano)</li>
-                    <li><strong>NEW:</strong> Automatic reasoning optimization for GPT-5 models (uses reasoning_effort: "low")</li>
-                    <li><strong>NEW:</strong> Support for all Claude 4.x models (Opus 4.5, Sonnet 4, Haiku 4.5)</li>
-                    <li><strong>IMPROVED:</strong> Removed token limits for OpenAI (simplified, no empty responses)</li>
-                    <li><strong>IMPROVED:</strong> Architecture redesign with SOLID principles (Strategy Pattern, Factory Pattern)</li>
-                    <li><strong>IMPROVED:</strong> 114 lines of code removed through simplification</li>
-                    <li><strong>IMPROVED:</strong> Immutable value objects for better code quality (PHP 8.0+)</li>
-                    <li><strong>IMPROVED:</strong> Logs ordered by most recent first (reverse chronological)</li>
-                    <li><strong>FIXED:</strong> Editor post updates now properly remoderated</li>
-                    <li><strong>FIXED:</strong> Claude max_tokens increased to 1024 (generous limit, API requirement)</li>
-                    <li><strong>UPDATED:</strong> All documentation to reflect OpenAI/Claude only support</li>
-                    <li><strong>UPDATED:</strong> WordPress tested up to 6.8</li>
-                    <li><strong>UPDATED:</strong> PHP 8.0+ now required</li>
-                </ul>
-
-                <h3>Version 1.1.0 - Initial Release</h3>
-                <ul>
-                    <li><strong>AI-Powered Moderation:</strong> Real-time content analysis for posts and comments using OpenAI, Anthropic Claude, or compatible LLM APIs</li>
-                    <li><strong>Admin Bypass System:</strong> Administrators skip all AI moderation (saves API costs, prevents loops)</li>
-                    <li><strong>Admin Override Flag:</strong> Prevents re-moderation when admins consciously override AI decisions</li>
-                    <li><strong>Delayed Enforcement:</strong> Optional 60-second re-check to ensure moderation decisions remain final</li>
-                    <li><strong>API Failure Rate Limiting:</strong> Automatically pauses API calls after 5 consecutive failures to prevent endpoint hammering</li>
-                    <li><strong>OpenAI Compatibility:</strong> Auto-detects and uses max_completion_tokens for newer OpenAI models (o1, gpt-4o variants)</li>
-                    <li><strong>Custom Prompts:</strong> Separate moderation rules for posts and comments</li>
-                    <li><strong>Detailed Logging:</strong> Every decision recorded with timestamp, reason, and decision type</li>
-                    <li><strong>Complete Uninstall:</strong> Removes all metadata, options, and transients when uninstalled</li>
-                    <li><strong>WordPress.org Compliance:</strong> Full adherence to WordPress plugin directory guidelines</li>
-                    <li><strong>Comprehensive Documentation:</strong> Official API references, troubleshooting guides, and setup instructions</li>
-                </ul>
-            </section>
-
-            <section id="support">
-                <h2>Support</h2>
-                <p>For support, bug reports, or feature requests, please contact the plugin author at <a href="mailto:linda.scoon@purplefootsteps.co.uk">linda.scoon@purplefootsteps.co.uk</a>.</p>
-
-                <div class="info-box">
-                    <strong>Debugging tip:</strong> Enable WordPress debug logging (WP_DEBUG_LOG) to see detailed connection information in <code>/wp-content/debug.log</code> if you encounter issues.
-                </div>
-            </section>
-
-            <section id="download">
-                <h2>Get Started</h2>
-                <p>Get started with Smart Moderator today and protect your WordPress site from spam and harmful content.</p>
-                <p>Contact the plugin author for installation instructions and access.</p>
-            </section>
-        </div>
-
-        <footer>
-            <p><strong>Smart Moderator</strong> - AI-Powered Content Moderation for WordPress</p>
-            <p style="margin-top: 10px;">Version 2.0.0 | Licensed under GPLv2 or later</p>
-            <p style="margin-top: 10px;">&copy; 2025 Linda Scoon. All rights reserved.</p>
-        </footer>
+      <footer>
+        <p>
+          <strong>Smart Moderator</strong> - AI-Powered Content Moderation for
+          WordPress
+        </p>
+        <p style="margin-top: 10px">
+          Version 2.0.0 | Licensed under GPLv2 or later
+        </p>
+        <p style="margin-top: 10px">
+          &copy; 2025 Linda Scoon. All rights reserved.
+        </p>
+      </footer>
     </div>
-</body>
+  </body>
 </html>
