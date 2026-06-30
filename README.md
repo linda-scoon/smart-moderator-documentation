@@ -22,11 +22,11 @@ You can connect it to any compatible LLM API endpoint (OpenAI, Anthropic, or sel
 - **AI moderation in real time** – Automatically analyze posts and comments as soon as they're created
 - **Admin bypass** – Administrators skip AI moderation entirely (no API cost for admin actions)
 - **Admin override system** – Admins can manually approve AI-rejected content without re-moderation loops
-- **Immediate decision + delayed enforcement** – The AI's result is applied immediately, then optionally re-enforced after 60 seconds (respects admin overrides)
-- **"Enforce moderation result" toggle** – When enabled, Smart Moderator ensures its moderation decision remains final even if other plugins, workflows, or users alter the status afterward
+- **Rejected content reverts to draft** – Rejected posts become drafts (author-only visibility) so authors can revise and resubmit
+- **Theme & plugin friendly** – Hook `smartmoderator_reject_post` to run your own rejection routine, or filter the fallback status (see [Developer Hooks](#developer-hooks))
 - **API failure rate limiting** – Automatically pauses API calls after repeated failures to prevent hammering the endpoint
 - **Custom prompts** – Configure separate moderation rules for posts and comments
-- **Detailed moderation logs** – Every decision is recorded with timestamp, reason, and decision type
+- **Audit log with retention** – Every decision is stored in a dedicated table and kept for a configurable period (default 30 days), then pruned automatically
 - **Privacy-safe API handling** – Keys are stored securely, never logged publicly, and sent only via HTTPS
 - **Compatible with existing WordPress moderation** – Works alongside WordPress's built-in comment moderation settings
 
@@ -42,12 +42,10 @@ You can connect it to any compatible LLM API endpoint (OpenAI, Anthropic, or sel
 4. **The AI responds** with either `approve` or `reject` (and optionally a short reason)
 5. **Smart Moderator applies the decision immediately:**
    - `approve` → publish or approve
-   - `reject` → set to pending/unapproved
-6. **If "Enforce moderation result" is enabled,** the plugin schedules a check 60 seconds later to re-apply the AI's decision if anything changed
+   - `reject` → rejected **posts** are reverted to **draft** (author-only visibility); rejected **comments** are held for moderation
+6. **Themes/plugins can take over rejection handling** via the `smartmoderator_reject_post` action, or change the fallback status via the `smartmoderator_rejected_post_status` filter (see [Developer Hooks](#developer-hooks))
 
-> 🕐 This delayed check ensures Smart Moderator has the final say, even if another plugin or manual edit attempts to override the moderation result.
-
-> 🔑 **Admin Override System:** When an admin manually publishes previously AI-rejected content, the plugin sets an "admin override" flag to prevent re-moderation loops. The delayed enforcement respects these admin decisions. If a non-admin later edits that content, the override flag is cleared and AI moderation runs again.
+> 🔑 **Admin Override System:** Admins (users who can manage options) bypass moderation. When an admin manually publishes previously AI-rejected content, the plugin sets an "admin override" flag to prevent re-moderation loops. If a non-admin later edits that content, the override flag is cleared and AI moderation runs again.
 
 ---
 
@@ -402,7 +400,7 @@ Enable WordPress debug logging to see detailed connection information:
 **Check error logs:**
 
 - Look for API errors in `/wp-content/debug.log`
-- Plugin falls back to "approve" if API fails (so content won't be blocked)
+- If the API fails, the plugin does nothing and leaves content unchanged (it never auto-publishes or rejects content it couldn't evaluate)
 
 ---
 
@@ -434,7 +432,7 @@ Smart Moderator automatically detects repeated API failures and pauses API calls
 
 **How it works:**
 - After 5 consecutive API failures within 1 hour, rate limiting activates
-- During rate limiting, content defaults to "approve" (doesn't block content)
+- During rate limiting, content is left unchanged (no status change, no log entry)
 - Rate limit automatically resets on the first successful API response
 - Failure count stored in transient (`smartmoderator_api_failures`)
 
@@ -510,59 +508,95 @@ Content:
 **The AI responds with something like:**
 - `approve` → Content is published/approved
 - `approve - looks good` → Content is published/approved (reason logged)
-- `reject` → Content is held for moderation
-- `reject - contains spam` → Content is held (reason logged)
+- `reject` → Post reverted to draft / comment held for moderation
+- `reject - contains spam` → Same, with the reason logged
 
 **Decision parsing:**
 - Case-insensitive: `Approve`, `APPROVE`, `approve` all work
 - Reason is optional: The AI can just say "approve" or "reject"
 - Anything not starting with "reject" is treated as "approve"
 
-### The "Enforce Moderation Result" Feature
+### Rejection Handling (No Code Required)
 
-When **enabled** (checkbox in settings):
+By default, a rejected post is reverted to **draft** — a draft is not publicly
+visible, but its author (and editors) can still see, edit, and resubmit it.
+Rejected comments are held for moderation.
 
-1. **Immediate moderation happens** as usual (approve or reject)
-2. **60 seconds later**, WordPress checks if the status changed
-3. **If changed**, it re-applies the AI's original decision
-4. **Exception:** Admin overrides are respected and never undone
+Two settings on **Tools → Smart Moderator** let you match the plugin to your
+theme without writing any code:
 
-**Example scenario (non-admin override):**
-- AI rejects a spam comment → comment is set to "pending"
-- Another plugin automatically approves it 30 seconds later
-- After 60 seconds total, Smart Moderator sees the change
-- It **re-rejects** the comment, setting it back to "pending"
+- **"When a post is rejected, set it to"** — Draft (default), Pending, or
+  Private. Most listing/ad themes treat sending an ad to draft exactly the same
+  as an admin rejecting it, so the theme's own on-reject logic (emails, list
+  updates, etc.) runs automatically off the status change.
+- **"Rejection action (optional)"** — if your theme exposes a named action that
+  runs when an ad is rejected, type its name here. Smart Moderator fires it
+  (with the post ID and reason) on every AI rejection. Your theme's support can
+  tell you the name; leave it blank if unsure.
 
-**Example scenario (admin override):**
-- AI rejects a post → post is set to "pending"
-- An admin manually publishes it → admin override flag is set
-- After 60 seconds, Smart Moderator sees the admin override flag
-- It **respects the admin's decision** and leaves the post published
+### The `smartmoderator_reject_post` Hook (for developers)
 
-**When this is useful:**
-- You have other plugins that might override moderation
-- You want AI to have final say (except for admin overrides)
-- You're testing the plugin and manually changing statuses
+If your theme or another plugin needs different behaviour (for example, a
+classifieds theme with its own "clean up" routine for ads), hook the
+`smartmoderator_reject_post` action. When a listener is attached, it fully
+owns the outcome and the plugin's default status change is skipped. The action
+passes the post ID, the post object, and the AI's rejection reason:
 
-**When to disable it:**
-- You want any manual edit to override AI
-- You don't have conflicting plugins
-- You prefer flexibility over enforcement
+```php
+add_action( 'smartmoderator_reject_post', function ( $post_id, $post, $reason ) {
+    // 1. Send the ad back to draft (author-only visibility).
+    wp_update_post( [ 'ID' => $post_id, 'post_status' => 'draft' ] );
 
-**Admin Override Behavior:**
-- When an admin publishes previously AI-rejected content, an "admin override" flag is set
-- This flag prevents the delayed enforcement from reverting the admin's decision
-- If a non-admin later edits that content, the override flag is cleared and AI moderation runs again
-- Admins editing admin-overridden content maintain the bypass (no re-moderation)
+    // 2. Email the author explaining the rejection.
+    $author = get_userdata( (int) $post->post_author );
+    if ( $author && $author->user_email ) {
+        wp_mail(
+            $author->user_email,
+            'Your ad was not approved',
+            "Hi {$author->display_name},\n\n"
+            . "Your ad \"{$post->post_title}\" was moved back to draft.\n"
+            . ( $reason ? "Reason: {$reason}\n\n" : "\n" )
+            . "Please edit it and resubmit."
+        );
+    }
+}, 10, 3 );
+```
+
+To simply change the fallback status (without writing a full handler), use the
+`smartmoderator_rejected_post_status` filter:
+
+```php
+add_filter( 'smartmoderator_rejected_post_status', fn() => 'pending' );
+```
+
+### Optional Delayed Re-enforcement
+
+Earlier versions shipped a default-on "Enforce moderation result" option that
+re-applied the AI's decision 60 seconds after saving, to stop other plugins or
+manual edits from overriding it. Because that reached back into content after
+the request and fought some themes, it is now **off by default** and exposed
+only as a developer filter:
+
+```php
+// Re-enable post-save re-enforcement of the AI decision.
+add_filter( 'smartmoderator_reenforce_decision', '__return_true' );
+```
+
+Admin overrides are still respected and never undone when re-enforcement is on.
 
 ### Moderation Logs
 
-Every moderation decision is logged per post/comment:
+Every moderation decision is recorded in a dedicated database table
+(`{prefix}smartmoderator_logs`).
 
 **Where to view logs:**
-- Not yet visible in UI (coming in a future version)
-- Stored in post/comment metadata (`_smartmoderator_log`)
-- Multiple entries if content is moderated multiple times
+- **Tools → Smart Moderator** → Logs screen (paginated, newest first)
+- Stored in their own table — not in post/comment meta — so they don't bloat core tables
+- Retention is configurable under **Keep moderation logs for** (default 30 days); old entries are pruned daily
+
+**What's logged:**
+- Decision: `approve` or `reject`
+- Reason: AI's explanation (or default message)
 
 **What's logged:**
 - Decision: `approve` or `reject`
@@ -595,7 +629,7 @@ Moderation costs depend on your chosen model and usage.
 - Use faster/cheaper models for comments (`gpt-4o-mini` or `claude-haiku-4-5`)
 - Use more powerful models only for posts
 - Disable post moderation if you only need comment filtering
-- Turn off "Enforce moderation result" to avoid duplicate API calls
+- Leave delayed re-enforcement off (the default) to avoid duplicate API calls
 
 **Monitoring usage:**
 - Anthropic: [console.anthropic.com/settings/usage](https://console.anthropic.com/settings/usage)
@@ -735,28 +769,53 @@ Settings saved. ✓ Connection test successful! API is responding correctly.
 - `wp_update_comment` - Handles REST API comment updates
 
 **Scheduled Events:**
-- `smartmoderator_publish_post` - Re-applies post decision after 60s
-- `smartmoderator_publish_comment` - Re-applies comment decision after 60s
+- `smartmoderator_publish_post` - Re-applies post decision after 60s (only when re-enforcement is enabled via filter)
+- `smartmoderator_publish_comment` - Re-applies comment decision after 60s (only when re-enforcement is enabled via filter)
+- `smartmoderator_clear_logs_daily` - Daily pruning of old log rows
+
+**Custom Tables:**
+- `{prefix}smartmoderator_logs` - Moderation audit log (object type/id, decision, reason, created_at)
 
 **Post Metadata:**
-- `_smartmoderator_log` - Array of moderation decisions
 - `_smartmoderator_processed` - Temporary flag during moderation
 - `_smartmoderator_ai_decision` - Last AI decision ('approve' or 'reject')
 - `_smartmoderator_admin_override` - Flag set when admin overrides AI rejection
 
 **Comment Metadata:**
-- `_smartmoderator_log` - Array of moderation decisions
 - `_smartmoderator_ai_decision` - Last AI decision ('approve' or 'reject')
 - `_smartmoderator_admin_override` - Flag set when admin overrides AI rejection
 
 **Transients:**
 - `smartmoderator_api_failures` - Tracks consecutive API failures for rate limiting (1 hour TTL)
 
+## Developer Hooks
+
+Smart Moderator exposes hooks so themes and plugins can integrate without editing the plugin:
+
+| Hook | Type | Description |
+| --- | --- | --- |
+| `smartmoderator_reject_post` | action | Fires when a post is rejected (`$post_id`, `$post`, `$reason`). If any callback is attached, it fully owns the outcome and the default status change is skipped. |
+| `smartmoderator_rejected_post_status` | filter | Status applied to rejected posts when no `smartmoderator_reject_post` listener exists. Default `draft`. |
+| `smartmoderator_reenforce_decision` | filter | Return `true` to re-apply the AI decision 60s after saving. Default `false`. |
+| `smartmoderator_log_retention_days` | filter | Days to keep logs (`0` = keep indefinitely). |
+| `smartmoderator_log_max_rows` | filter | Hard cap on stored log rows (`0` = no cap). |
+
+```php
+// Example: a classifieds theme runs its own cleanup when an ad is rejected.
+add_action( 'smartmoderator_reject_post', function ( $post_id, $post, $reason ) {
+    my_theme_revert_ad_to_draft( $post_id );
+    my_theme_email_author( $post, $reason );
+}, 10, 3 );
+```
+
+Also stored as post meta for convenience: `_smartmoderator_ai_decision`
+(`approve`/`reject`) and `_smartmoderator_ai_reason` (the reason text).
+
 **Fallback Behavior:**
-- If API fails or is unreachable → defaults to **"approve"**
-- After 5 consecutive API failures → rate limiting activates (skips API calls temporarily)
+- If API fails, is unreachable, or isn't configured → **does nothing** (content is left exactly as-is)
+- After 5 consecutive API failures → rate limiting activates (skips API calls temporarily, still does nothing to content)
 - Rate limit resets automatically on first successful API response
-- This prevents blocking legitimate content due to API issues
+- The plugin only changes status on an explicit AI approve/reject, so outages never auto-publish or wrongly reject content
 - Errors are logged to PHP error log for debugging
 
 ---
