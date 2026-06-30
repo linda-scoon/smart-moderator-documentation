@@ -595,13 +595,11 @@ Every moderation decision is recorded in a dedicated database table
 - Retention is configurable under **Keep moderation logs for** (default 30 days); old entries are pruned daily
 
 **What's logged:**
-- Decision: `approve` or `reject`
-- Reason: AI's explanation (or default message)
-
-**What's logged:**
-- Decision: `approve` or `reject`
-- Reason: AI's explanation (or default message)
+- Decision: `approve`, `reject`, or `skip` (the AI errored / was unreachable, so the item was left unmoderated — shown as "Skipped (AI error)"). A skip is recorded once per item until a real decision is made.
+- Reason: AI's explanation, or the error detail for a skip
 - Timestamp: When the decision was made
+
+Edits to already-published or pending ads are re-moderated (and logged) when their title or content changes — so an ad can't go live clean and then be edited to add spam without being re-checked.
 
 **Logs DO NOT contain:**
 - Full post/comment content
@@ -796,6 +794,10 @@ Smart Moderator exposes hooks so themes and plugins can integrate without editin
 | --- | --- | --- |
 | `smartmoderator_reject_post` | action | Fires when a post is rejected (`$post_id`, `$post`, `$reason`). If any callback is attached, it fully owns the outcome and the default status change is skipped. |
 | `smartmoderator_rejected_post_status` | filter | Status applied to rejected posts when no `smartmoderator_reject_post` listener exists. Default `draft`. |
+| `smartmoderator_approve_post` | action | Fires when a post is approved (`$post_id`, `$post`, `$reason`). If any callback is attached, it fully owns the outcome (e.g. a payment-gated publish flow). |
+| `smartmoderator_approved_post_status` | filter | Status applied to approved posts when no `smartmoderator_approve_post` listener exists. Default `publish`. |
+| `smartmoderator_trigger_statuses` | filter | Statuses whose arrival triggers moderation. Default `['pending','publish']`. |
+| `smartmoderator_moderate_programmatic_edits` | filter | Whether to re-moderate edits made with no logged-in user (imports/cron). Default `false`. |
 | `smartmoderator_reenforce_decision` | filter | Return `true` to re-apply the AI decision 60s after saving. Default `false`. |
 | `smartmoderator_log_retention_days` | filter | Days to keep logs (`0` = keep indefinitely). |
 | `smartmoderator_log_max_rows` | filter | Hard cap on stored log rows (`0` = no cap). |

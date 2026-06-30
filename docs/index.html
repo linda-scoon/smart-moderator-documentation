@@ -195,6 +195,22 @@
               <code>draft</code>.
             </li>
             <li>
+              <strong><code>smartmoderator_approve_post</code></strong> (action)
+              - Mirrors the reject action for approvals. If attached it fully
+              owns the outcome (e.g. a payment-gated theme that publishes through
+              its own flow instead of letting the AI publish).
+            </li>
+            <li>
+              <strong><code>smartmoderator_approved_post_status</code></strong>
+              (filter) - The status applied to approved posts. Default
+              <code>publish</code>.
+            </li>
+            <li>
+              <strong><code>smartmoderator_trigger_statuses</code></strong>
+              (filter) - Which statuses trigger moderation. Default
+              <code>pending</code> + <code>publish</code> (also a setting).
+            </li>
+            <li>
               <strong><code>smartmoderator_reenforce_decision</code></strong>
               (filter) - Return <code>true</code> to re-apply the AI decision 60
               seconds after saving (off by default).
@@ -282,7 +298,19 @@
         </section>
 
         <section id="pricing">
-          <h2>Supported AI Models (2025)</h2>
+          <h2>Supported AI Models</h2>
+
+          <div class="info-box">
+            <strong>⏱ Accurate as of June 2026.</strong> The model names,
+            availability, and prices below were current when this page was
+            written. AI providers change their model line-ups and pricing
+            frequently — always check
+            <a href="https://platform.openai.com/docs/models">OpenAI's</a> and
+            <a href="https://docs.anthropic.com/en/docs/about-claude/models">Anthropic's</a>
+            current model pages before choosing. Smart Moderator works with
+            whatever model name you enter, so newer models keep working without a
+            plugin update.
+          </div>
 
           <div class="pricing-table">
             <div class="pricing-card">
@@ -693,10 +721,13 @@
           <div class="faq-item">
             <div class="faq-question">Can I see what the AI decided?</div>
             <p>
-              Yes. Every decision (approve/reject, reason, timestamp) is stored
+              Yes. Every decision (approve / reject, reason, timestamp) is stored
               in a dedicated log table and shown on the
-              <strong>Tools → Smart Moderator</strong> logs screen. You choose
-              how long logs are kept under <strong>Keep moderation logs for</strong>
+              <strong>Tools → Smart Moderator</strong> logs screen. If the AI
+              ever errors or is unreachable, that is recorded too as a
+              <strong>"Skipped (AI error)"</strong> entry, so you can see which
+              items were left unmoderated and review them by hand. You choose how
+              long logs are kept under <strong>Keep moderation logs for</strong>
               (default 30 days); older entries are pruned automatically once a
               day. Because logs live in their own table rather than post/comment
               meta, keeping them longer does not slow down the rest of your site.
@@ -750,111 +781,51 @@
 
         <section id="changelog">
           <h2>Changelog</h2>
-
-          <h3>Version 2.0.0 - Major Release (2025)</h3>
+          <h3>Version 2.1.0</h3>
           <ul>
-            <li>
-              <strong>⚠️ BREAKING:</strong> Now explicitly supports only OpenAI
-              and Anthropic Claude (no longer API-agnostic)
-            </li>
-            <li>
-              <strong>NEW:</strong> Added GPT-5 support (gpt-5, gpt-5-mini,
-              gpt-5-nano)
-            </li>
-            <li>
-              <strong>NEW:</strong> Automatic reasoning optimization for GPT-5
-              models (uses reasoning_effort: "low")
-            </li>
-            <li>
-              <strong>NEW:</strong> Support for all Claude 4.x models (Opus 4.5,
-              Sonnet 4, Haiku 4.5)
-            </li>
-            <li>
-              <strong>IMPROVED:</strong> Removed token limits for OpenAI
-              (simplified, no empty responses)
-            </li>
-            <li>
-              <strong>IMPROVED:</strong> Architecture redesign with SOLID
-              principles (Strategy Pattern, Factory Pattern)
-            </li>
-            <li>
-              <strong>IMPROVED:</strong> 114 lines of code removed through
-              simplification
-            </li>
-            <li>
-              <strong>IMPROVED:</strong> Immutable value objects for better code
-              quality (PHP 8.0+)
-            </li>
-            <li>
-              <strong>IMPROVED:</strong> Logs ordered by most recent first
-              (reverse chronological)
-            </li>
-            <li>
-              <strong>FIXED:</strong> Editor post updates now properly
-              remoderated
-            </li>
-            <li>
-              <strong>FIXED:</strong> Claude max_tokens increased to 1024
-              (generous limit, API requirement)
-            </li>
-            <li>
-              <strong>UPDATED:</strong> All documentation to reflect
-              OpenAI/Claude only support
-            </li>
-            <li><strong>UPDATED:</strong> WordPress tested up to 6.8</li>
-            <li><strong>UPDATED:</strong> PHP 8.0+ now required</li>
+            <li><strong>New</strong> - Genuine AI errors are logged as a "Skipped (AI error)" entry (once per item, configured sites only) so admins can see which content the AI could not evaluate.</li>
+            <li><strong>New</strong> - Editing an already-published or pending ad re-moderates it when the content changes (genuine user edits only — programmatic/cron updates are skipped), so post-approval edits (e.g. added spam) are caught.</li>
+            <li><strong>New</strong> - "Moderate when a post becomes" setting to choose which statuses trigger moderation (default Pending + Published; includes any custom statuses your theme registers).</li>
+            <li><strong>New</strong> - "When a post is approved, set it to" setting plus a <code>smartmoderator_approve_post</code> action / <code>smartmoderator_approved_post_status</code> filter, so themes with their own publish flow (e.g. payment-gated ads) can control what "approved" does. Default Published (no change).</li>
+            <li><strong>Improved</strong> - The recursion guard now uses a short-lived transient, so a fatal error mid-moderation can't permanently wedge a post.</li>
+            <li><strong>Security</strong> - Outbound API requests now use wp_safe_remote_post(), blocking loopback/private/link-local hosts (SSRF mitigation for the configurable endpoint).</li>
+            <li><strong>Security/Compliance</strong> - Admin JavaScript and CSS are now enqueued (no inline scripts/styles); removed verbose debug logging; prefixed all internal class names to avoid collisions.</li>
+            <li><strong>Fixed</strong> - API failures now correctly leave content untouched and engage rate limiting (previously some error paths could auto-approve).</li>
+            <li><strong>Changed</strong> - On API error, missing config, or rate limiting, the plugin now does nothing (leaves content unchanged) instead of defaulting to "approve". It only changes status on an explicit AI approve/reject.</li>
+            <li><strong>New</strong> - No-code rejection settings: choose the status rejected posts are set to (default Draft), and optionally name a theme action to trigger on rejection — no <code>functions.php</code> editing required.</li>
+            <li><strong>Changed</strong> - Rejected posts are now reverted to <strong>draft</strong> (author-only visibility) instead of pending, so authors can revise and resubmit.</li>
+            <li><strong>New</strong> - Developer hooks for integrating with themes/plugins: <code>smartmoderator_reject_post</code> (action), <code>smartmoderator_rejected_post_status</code> (filter), <code>smartmoderator_reenforce_decision</code> (filter), <code>smartmoderator_log_retention_days</code> (filter), and <code>smartmoderator_log_max_rows</code> (filter).</li>
+            <li><strong>Changed</strong> - The default-on "Enforce moderation result" 60-second re-enforcement has been removed from the UI. It fought other plugins/themes and is now off by default, available only via the <code>smartmoderator_reenforce_decision</code> filter.</li>
+            <li><strong>New</strong> - Moderation logs are now stored in a dedicated table with a configurable retention period (default 30 days) instead of being wiped in full every day. New "Keep moderation logs for" setting.</li>
+            <li><strong>Improved</strong> - Logging no longer accumulates in post/comment meta, keeping core tables lean on high-volume sites.</li>
           </ul>
-
-          <h3>Version 1.1.0 - Initial Release</h3>
+          <h3>Version 2.0.0</h3>
           <ul>
-            <li>
-              <strong>AI-Powered Moderation:</strong> Real-time content analysis
-              for posts and comments using OpenAI, Anthropic Claude, or
-              compatible LLM APIs
-            </li>
-            <li>
-              <strong>Admin Bypass System:</strong> Administrators skip all AI
-              moderation (saves API costs, prevents loops)
-            </li>
-            <li>
-              <strong>Admin Override Flag:</strong> Prevents re-moderation when
-              admins consciously override AI decisions
-            </li>
-            <li>
-              <strong>Optional Delayed Enforcement:</strong> Off by default;
-              a 60-second re-check can be re-enabled by developers via the
-              <code>smartmoderator_reenforce_decision</code> filter
-            </li>
-            <li>
-              <strong>API Failure Rate Limiting:</strong> Automatically pauses
-              API calls after 5 consecutive failures to prevent endpoint
-              hammering
-            </li>
-            <li>
-              <strong>OpenAI Compatibility:</strong> Auto-detects and uses
-              max_completion_tokens for newer OpenAI models (o1, gpt-4o
-              variants)
-            </li>
-            <li>
-              <strong>Custom Prompts:</strong> Separate moderation rules for
-              posts and comments
-            </li>
-            <li>
-              <strong>Detailed Logging:</strong> Every decision recorded with
-              timestamp, reason, and decision type
-            </li>
-            <li>
-              <strong>Complete Uninstall:</strong> Removes all metadata,
-              options, and transients when uninstalled
-            </li>
-            <li>
-              <strong>WordPress.org Compliance:</strong> Full adherence to
-              WordPress plugin directory guidelines
-            </li>
-            <li>
-              <strong>Comprehensive Documentation:</strong> Official API
-              references, troubleshooting guides, and setup instructions
-            </li>
+            <li><strong>Major refactoring</strong> - Complete architecture redesign following SOLID principles</li>
+            <li><strong>Breaking change</strong> - Now explicitly supports only OpenAI and Claude (removed generic API support)</li>
+            <li><strong>New</strong> - Proper OpenAI API implementation with full GPT-4, GPT-4o, O1 model support</li>
+            <li><strong>New</strong> - Proper Claude API implementation with full Claude 3.5 and Claude 3 family support</li>
+            <li><strong>New</strong> - Auto-detection of AI provider based on endpoint URL</li>
+            <li><strong>Fixed</strong> - Editor post updates now properly remoderated (bug fix)</li>
+            <li><strong>Fixed</strong> - Response format parsing now provider-specific and more reliable</li>
+            <li><strong>Improved</strong> - Better error messages with provider context</li>
+            <li><strong>Improved</strong> - Type-safe value objects (Moderation_Result, Moderation_Config)</li>
+            <li><strong>Improved</strong> - Strategy pattern for API clients (easy to extend in future)</li>
+            <li><strong>Improved</strong> - Comprehensive error logging with provider identification</li>
+            <li><strong>Code quality</strong> - Follows WordPress coding standards and PHP best practices</li>
+            <li><strong>Code quality</strong> - Full separation of concerns (API logic separated from WordPress integration)</li>
+          </ul>
+          <h3>Version 1.1.0</h3>
+          <ul>
+            <li>Initial public release</li>
+            <li>AI-powered moderation for posts and comments</li>
+            <li>Support for Anthropic Claude and OpenAI GPT APIs</li>
+            <li>Custom moderation prompts per content type</li>
+            <li>"Enforce moderation result" feature - re-checks after 60s to prevent overrides</li>
+            <li>Comprehensive error handling with user-friendly messages</li>
+            <li>Detailed moderation logging</li>
+            <li>Secure API key storage</li>
+            <li>Full WordPress.org compliance</li>
           </ul>
         </section>
 

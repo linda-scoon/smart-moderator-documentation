@@ -206,6 +206,11 @@ Yes. Each site in a multisite network has its own settings.
 == Changelog ==
 
 = 2.1.0 =
+* **New** - Genuine AI errors are logged as a "Skipped (AI error)" entry (once per item, configured sites only) so admins can see which content the AI could not evaluate.
+* **New** - Editing an already-published or pending ad re-moderates it when the content changes (genuine user edits only — programmatic/cron updates are skipped), so post-approval edits (e.g. added spam) are caught.
+* **New** - "Moderate when a post becomes" setting to choose which statuses trigger moderation (default Pending + Published; includes any custom statuses your theme registers).
+* **New** - "When a post is approved, set it to" setting plus a `smartmoderator_approve_post` action / `smartmoderator_approved_post_status` filter, so themes with their own publish flow (e.g. payment-gated ads) can control what "approved" does. Default Published (no change).
+* **Improved** - The recursion guard now uses a short-lived transient, so a fatal error mid-moderation can't permanently wedge a post.
 * **Security** - Outbound API requests now use wp_safe_remote_post(), blocking loopback/private/link-local hosts (SSRF mitigation for the configurable endpoint).
 * **Security/Compliance** - Admin JavaScript and CSS are now enqueued (no inline scripts/styles); removed verbose debug logging; prefixed all internal class names to avoid collisions.
 * **Fixed** - API failures now correctly leave content untouched and engage rate limiting (previously some error paths could auto-approve).
