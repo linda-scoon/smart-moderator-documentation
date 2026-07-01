@@ -534,6 +534,19 @@ theme without writing any code:
   (with the post ID and reason) on every AI rejection. Your theme's support can
   tell you the name; leave it blank if unsure.
 
+**Each rejection is carried out exactly once.** Some theme submission flows
+save the same post more than once (and forms can get double-submitted). For a
+short window after a decision (10 minutes by default, filterable via
+`smartmoderator_decision_reuse_window`), a repeat save of that exact content
+reuses the stored decision: the AI isn't called again, no second log row is
+added, and the rejection action/hook doesn't re-fire — no duplicate rejection
+emails. On no-code setups the rejected status is quietly re-applied so the
+duplicate save can't sneak the content back into the queue; when a
+`smartmoderator_reject_post` listener is registered the repeat is skipped
+entirely, because the listener already handled it and owns the outcome.
+Editing the content, changing the prompts/model/endpoint, an admin override,
+or the window passing each trigger a fresh decision as usual.
+
 ### The `smartmoderator_reject_post` Hook (for developers)
 
 If your theme or another plugin needs different behaviour (for example, a
@@ -755,10 +768,12 @@ Settings saved. ✓ Connection test successful! API is responding correctly.
 
 **Post Metadata:**
 - `_smartmoderator_ai_decision` - Last AI decision ('approve' or 'reject')
+- `_smartmoderator_decision_fingerprint` - Hash + timestamp of the last decision's content and settings, used to reuse the stored decision when identical content is re-saved within the reuse window (delete it to force re-moderation)
 - `_smartmoderator_admin_override` - Flag set when admin overrides AI rejection
 
 **Comment Metadata:**
 - `_smartmoderator_ai_decision` - Last AI decision ('approve' or 'reject')
+- `_smartmoderator_decision_fingerprint` - Hash + timestamp of the last decision's content and settings, used to reuse the stored decision when identical content is re-saved within the reuse window (delete it to force re-moderation)
 - `_smartmoderator_admin_override` - Flag set when admin overrides AI rejection
 
 **Transients:**
@@ -776,6 +791,7 @@ Smart Moderator exposes hooks so themes and plugins can integrate without editin
 | `smartmoderator_approved_post_status` | filter | Status applied to approved posts when no `smartmoderator_approve_post` listener exists. Default `publish`. |
 | `smartmoderator_trigger_statuses` | filter | Statuses whose arrival triggers moderation. Default `['pending','publish']`. |
 | `smartmoderator_moderate_programmatic_edits` | filter | Whether to re-moderate edits made with no logged-in user (imports/cron). Default `false`. |
+| `smartmoderator_decision_reuse_window` | filter | Seconds a decision is reused for identical content (absorbs duplicate saves of one submission). Default `600`; `0` disables reuse. |
 | `smartmoderator_log_retention_days` | filter | Days to keep logs (`0` = keep indefinitely). |
 | `smartmoderator_log_max_rows` | filter | Hard cap on stored log rows (`0` = no cap). |
 

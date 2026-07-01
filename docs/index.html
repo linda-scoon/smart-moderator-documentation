@@ -165,6 +165,20 @@
             flag to prevent re-moderation loops. If a non-admin later edits that
             content, the override flag is cleared and AI moderation runs again.
           </div>
+
+          <div class="info-box" style="margin-top: 20px">
+            <strong>♻️ Each decision is carried out once:</strong> some theme
+            submission flows save the same post more than once (and forms can
+            be double-submitted). For a short window after a decision (10
+            minutes by default, filterable), a repeat save of that exact
+            content reuses the stored decision — no second AI call, no
+            duplicate log entry, and no re-fired rejection action or hook, so
+            no duplicate rejection emails. On no-code setups the decided
+            status is quietly re-applied; when a listener hook owns the
+            outcome, the repeat is skipped entirely. Editing the content,
+            changing the prompts/model/endpoint, an admin override, or the
+            window passing each trigger a fresh decision as usual.
+          </div>
         </section>
 
         <section id="developer-hooks">
@@ -209,6 +223,12 @@
               <strong><code>smartmoderator_trigger_statuses</code></strong>
               (filter) - Which statuses trigger moderation. Default
               <code>pending</code> + <code>publish</code> (also a setting).
+            </li>
+            <li>
+              <strong><code>smartmoderator_decision_reuse_window</code></strong>
+              (filter) - Seconds a decision is reused when identical content is
+              re-saved (absorbs duplicate saves of one submission). Default
+              <code>600</code>; <code>0</code> disables reuse.
             </li>
             <li>
               <strong><code>smartmoderator_log_retention_days</code></strong>

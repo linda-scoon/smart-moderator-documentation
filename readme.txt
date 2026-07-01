@@ -136,6 +136,10 @@ If the request fails, credentials are missing, or the AI can't make a determinat
 
 Yes. Moderation runs once when content is saved, and admins (users who can manage options) bypass moderation entirely. Manual WordPress status changes are respected and are not second-guessed by the plugin.
 
+= What if the same content is saved more than once? =
+
+Some theme submission flows re-save a post in a follow-up request (and forms can be double-submitted). For a short window after a decision (10 minutes by default), a repeat save of that exact content reuses the stored decision instead of running everything again — no second AI call, no duplicate log entry, and no re-fired rejection action or hook, so no duplicate rejection emails. On no-code setups the decided status is quietly re-applied; when your theme owns the outcome through a listener hook, the repeat is skipped entirely. Editing the content, changing the prompts/model/endpoint, an admin override, or the window passing each trigger a fresh decision as usual.
+
 = How much does this cost? =
 
 Costs depend on your chosen provider and model:
@@ -270,6 +274,8 @@ The decision and reason are also saved as post meta (`_smartmoderator_ai_decisio
 **`smartmoderator_rejected_post_status`** (filter) — the post status applied to rejected content when no `smartmoderator_reject_post` listener is registered. Default `draft`.
 
 `add_filter( 'smartmoderator_rejected_post_status', fn() => 'pending' );`
+
+**`smartmoderator_decision_reuse_window`** (filter) — how long (seconds) a decision is reused when identical content is re-saved, absorbing duplicate saves of one submission. Default 600; return 0 to disable reuse.
 
 **`smartmoderator_log_retention_days`** (filter) — number of days to keep logs (0 = keep indefinitely).
 
