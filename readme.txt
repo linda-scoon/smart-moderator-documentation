@@ -136,8 +136,6 @@ If the request fails, credentials are missing, or the AI can't make a determinat
 
 Yes. Moderation runs once when content is saved, and admins (users who can manage options) bypass moderation entirely. Manual WordPress status changes are respected and are not second-guessed by the plugin.
 
-Earlier versions had an "Enforce moderation result" option that re-applied the AI decision 60 seconds after saving. That aggressive behaviour fought other plugins and themes, so it is now off by default. Developers who genuinely need it can re-enable it with the `smartmoderator_reenforce_decision` filter (see Developer Hooks).
-
 = How much does this cost? =
 
 Costs depend on your chosen provider and model:
@@ -272,10 +270,6 @@ The decision and reason are also saved as post meta (`_smartmoderator_ai_decisio
 **`smartmoderator_rejected_post_status`** (filter) — the post status applied to rejected content when no `smartmoderator_reject_post` listener is registered. Default `draft`.
 
 `add_filter( 'smartmoderator_rejected_post_status', fn() => 'pending' );`
-
-**`smartmoderator_reenforce_decision`** (filter) — return `true` to re-apply the AI decision 60 seconds after saving (off by default).
-
-`add_filter( 'smartmoderator_reenforce_decision', '__return_true' );`
 
 **`smartmoderator_log_retention_days`** (filter) — number of days to keep logs (0 = keep indefinitely).
 

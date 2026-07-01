@@ -569,21 +569,6 @@ To simply change the fallback status (without writing a full handler), use the
 add_filter( 'smartmoderator_rejected_post_status', fn() => 'pending' );
 ```
 
-### Optional Delayed Re-enforcement
-
-Earlier versions shipped a default-on "Enforce moderation result" option that
-re-applied the AI's decision 60 seconds after saving, to stop other plugins or
-manual edits from overriding it. Because that reached back into content after
-the request and fought some themes, it is now **off by default** and exposed
-only as a developer filter:
-
-```php
-// Re-enable post-save re-enforcement of the AI decision.
-add_filter( 'smartmoderator_reenforce_decision', '__return_true' );
-```
-
-Admin overrides are still respected and never undone when re-enforcement is on.
-
 ### Moderation Logs
 
 Every moderation decision is recorded in a dedicated database table
@@ -627,7 +612,6 @@ Moderation costs depend on your chosen model and usage.
 - Use faster/cheaper models for comments (`gpt-4o-mini` or `claude-haiku-4-5`)
 - Use more powerful models only for posts
 - Disable post moderation if you only need comment filtering
-- Leave delayed re-enforcement off (the default) to avoid duplicate API calls
 
 **Monitoring usage:**
 - Anthropic: [console.anthropic.com/settings/usage](https://console.anthropic.com/settings/usage)
@@ -732,11 +716,8 @@ Access via **Tools → Smart Moderator**.
 - When unchecked, comments are not sent to AI
 - Posts are always moderated (cannot disable)
 
-**Enforce Moderation Result**
-- Checkbox to enable delayed re-enforcement
-- When enabled: AI's decision is re-applied after 60 seconds
-- Prevents other plugins or manual changes from overriding AI
-- When disabled: AI decision is applied once, no re-checks
+Moderation runs once per save; the AI's decision is applied immediately and is
+not re-checked afterwards.
 
 ### Test Connection Button
 
@@ -767,15 +748,12 @@ Settings saved. ✓ Connection test successful! API is responding correctly.
 - `wp_update_comment` - Handles REST API comment updates
 
 **Scheduled Events:**
-- `smartmoderator_publish_post` - Re-applies post decision after 60s (only when re-enforcement is enabled via filter)
-- `smartmoderator_publish_comment` - Re-applies comment decision after 60s (only when re-enforcement is enabled via filter)
 - `smartmoderator_clear_logs_daily` - Daily pruning of old log rows
 
 **Custom Tables:**
 - `{prefix}smartmoderator_logs` - Moderation audit log (object type/id, decision, reason, created_at)
 
 **Post Metadata:**
-- `_smartmoderator_processed` - Temporary flag during moderation
 - `_smartmoderator_ai_decision` - Last AI decision ('approve' or 'reject')
 - `_smartmoderator_admin_override` - Flag set when admin overrides AI rejection
 
@@ -798,7 +776,6 @@ Smart Moderator exposes hooks so themes and plugins can integrate without editin
 | `smartmoderator_approved_post_status` | filter | Status applied to approved posts when no `smartmoderator_approve_post` listener exists. Default `publish`. |
 | `smartmoderator_trigger_statuses` | filter | Statuses whose arrival triggers moderation. Default `['pending','publish']`. |
 | `smartmoderator_moderate_programmatic_edits` | filter | Whether to re-moderate edits made with no logged-in user (imports/cron). Default `false`. |
-| `smartmoderator_reenforce_decision` | filter | Return `true` to re-apply the AI decision 60s after saving. Default `false`. |
 | `smartmoderator_log_retention_days` | filter | Days to keep logs (`0` = keep indefinitely). |
 | `smartmoderator_log_max_rows` | filter | Hard cap on stored log rows (`0` = no cap). |
 

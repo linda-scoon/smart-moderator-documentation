@@ -148,10 +148,6 @@ Comment text goes here...
 
 ## ⚙️ KEY SETTINGS EXPLAINED
 
-**Enforce Moderation Result:**
-- ☐ OFF: AI moderates once, admins can override
-- ☑ ON: AI moderates, then re-checks after 60 seconds to enforce decision (respects admin overrides)
-
 **Moderate Comments:**
 - ☐ OFF: Only posts are moderated
 - ☑ ON: Both posts and comments are moderated
@@ -224,7 +220,6 @@ Reject comments with only links.
 - [ ] Saw green success message
 - [ ] Configured moderation prompts
 - [ ] Enabled "Moderate comments" (if wanted)
-- [ ] Decided on "Enforce moderation result"
 - [ ] Tested with a sample post/comment
 
 ---
